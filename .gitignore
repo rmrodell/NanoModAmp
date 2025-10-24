@@ -1,0 +1,13 @@
+# Log and result files
+results/
+logs/
+
+# Data files (except for small test data)
+data/*
+!data/test_data/
+
+# Environment and temporary files
+*.Rproj.user
+.Rhistory
+__pycache__/
+*venv/
