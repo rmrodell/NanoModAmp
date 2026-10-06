@@ -10,13 +10,24 @@ The directories listed below will be created in the results directory after the 
 
 ## Pipeline overview
 
-The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes data using the following steps:
+Output layout (plan §4; contracts in [docs/contracts/](contracts/)):
 
+```
+results/
+  pipeline_info/            # execution report, timeline, trace, software versions, params
+  preprocess/<sample>/      # tool logs (cutadapt, umi_tools, UMICollapse) and both-orientation counts
+  bam/<sample>.bam(.bai)    # final BAM: deduplicated, or MAPQ-filtered when umi = false
+  metrics/read_funnel.tsv   # all samples, steps that ran (docs/contracts/read_funnel.md)
+  counts/per_sample/<sample>.counts.tsv
+  counts/per_sample/<sample>.failed_regions.tsv
+  counts/counts_merged.tsv  # sample_id + metadata + counts (docs/contracts/counts.md)
+  qc/background/            # only with --count_all_bases
+  calling/<analysis>/       # <name>_log.txt, <name>_resolved_config.yaml, data_summary/, data_raw/, plots/ (PDF + PNG)
+  site_sets/<set_name>/     # optional
+  multiqc/multiqc_report.html
+```
 
-- [MultiQC](#multiqc) - Aggregate report describing results and QC from the whole pipeline
-- [Pipeline information](#pipeline-information) - Report metrics generated during the workflow execution
-
-
+_WP2–WP4 fill in per-file descriptions below._
 
 ### MultiQC
 

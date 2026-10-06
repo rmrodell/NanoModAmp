@@ -4,61 +4,112 @@
 
 ## Introduction
 
-<!-- TODO nf-core: Add documentation about anything specific to running your pipeline. For general topics, please point to (and add to) the main nf-core website. -->
+rmrodell/nanomodamp goes from demultiplexed Nano-BID-Amp FASTQ files to per-site deletion
+counts and, optionally, pseudouridine site calls with standard plots. One pipeline run
+processes one **sequencing run of one library type** (`endogenous` or `mpra`).
 
-## Samplesheet input
+## Sample sheet
 
-You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row as shown in the examples below.
+Pass a comma-separated sample sheet with a header row using `--input`:
+
+```csv title="samplesheet.csv"
+sample_id,fastq,treat,rep,celltype,vector
+HepG2_WT_1_BS,fastq/HepG2_WT_1_BS.fastq.gz,BS,1,HepG2,WT
+HepG2_WT_1_input,fastq/HepG2_WT_1_input.fastq.gz,input,1,HepG2,WT
+HepG2_WT_2_BS,fastq/barcode07/,BS,2,HepG2,WT
+```
+
+| Column      | Description |
+| ----------- | ----------- |
+| `sample_id` | Unique sample name; letters, digits, `.`, `_` and `-` only. |
+| `fastq`     | A `.fastq.gz` file, **or** a directory whose `*.fastq.gz` files are concatenated in lexical order. Relative paths are resolved against the sample sheet's directory. |
+| `treat`     | Exactly `input` or `BS` (D14: no implicit recoding; label your no-enzyme controls `input`). |
+| `rep`       | Batch-paired replicate: rep *k* of every condition comes from the same batch (D17). |
+| any other   | Metadata (e.g. `celltype`, `vector`). Carried into `counts/counts_merged.tsv` and usable in analysis subsets and factors. |
+
+Duplicate `sample_id`s, missing files, empty FASTQ directories and `treat` values other than
+`input`/`BS` stop the run at startup. Blank lines are ignored with a warning. The full
+contract is in [docs/contracts/samplesheet.md](contracts/samplesheet.md).
+
+## Library type, reference and targets
+
+| Parameter | Meaning |
+| --------- | ------- |
+| `--library_type` | `endogenous` (transcript amplicons) or `mpra` (oligo pool). Sets the minimap2 default (`mpra`: `-ax sr`; `endogenous`: `-ax splice -uf`, D5) and enables the MPRA pool-adapter trim. |
+| `--fasta` | Transcript sequences (endogenous) or the oligo pool (MPRA). The `.fai` is built if missing. |
+| `--bed` | Amplicons or single sites, at least 6 columns, `+` strand. |
+| `--bed_coordinates` | `bed0` (standard 0-based BED) or `one_based_start` (the BED start is the 1-based site, as in the paper's single-site BEDs). Required until gate G1-e sets the default (R-15). |
+
+## Analyses
+
+Site calling runs when `--analyses analyses.yaml` is given; otherwise the pipeline stops after
+counting. See [docs/contracts/analyses.md](contracts/analyses.md) and
+`assets/analyses_example.yaml`.
+
+## Libraries without ONT adapters or UMIs (legacy libraries)
+
+**Use the defaults for all data**, including endogenous, MPRA in vitro and **MPRA in cellulo**
+libraries: `--orientation_adapters ont`, `--ont_adapter_mode linked` and `--umi true`. Reads are
+oriented with both ONT adapters required (D4), UMIs are extracted, and duplicates are removed with
+UMICollapse.
+
+Three opt-in settings exist **only** for legacy libraries that were built without some of these
+elements. They are never chosen automatically (not from `--library_type`, and not from any sample
+name or label such as "in cellulo"). Set them only when you know the library lacks the adapter or
+UMI.
+
+| Setting | Use only when the library has… | What changes |
+| ------- | ------------------------------ | ------------ |
+| `--orientation_adapters pool --umi false` (D29) | no ONT adapters and no UMIs (MPRA only) | Reads are oriented with the MPRA pool adapters (`--pool_adapter_5p/3p` sense, `--pool_adapter_antisense_5p/3p` antisense, `--trim1_min_length/--trim1_min_overlap`); the separate pool trim, UMI extraction and UMICollapse are skipped; the filtered BAM is the final BAM. |
+| `--umi false` | ONT adapters but no UMIs | UMI extraction and UMICollapse are skipped. |
+| `--ont_adapter_mode three_prime_only` (D31) | no 5′ ONT adapter on the reads | One cutadapt pass trims the 3′ ONT adapter (`-a <ont_adapter_sense_3p>`, `-m/-O` from `trim1_*`) and **keeps untrimmed reads**; there is no antisense pass or reverse complement. Only valid with `--orientation_adapters ont`. |
+
+**Example: the golden test package.** The paper's in-cellulo MPRA samples from sequencing run
+20241114 were made from a library without ONT adapters or UMIs, and the endogenous samples from
+run 20250418 lack the 5′ ONT adapter. `conf/test_golden.config` is the only place the pipeline
+sets these modes, and only for those samples:
 
 ```bash
---input '[path to samplesheet file]'
+# paper run 20241114 (in-cellulo samples, library without ONT adapters/UMIs)
+nextflow run rmrodell/nanomodamp -profile test_golden,docker --golden_experiment mpra_incell --outdir results_incell
+# equivalent explicit parameters for such a legacy library
+nextflow run rmrodell/nanomodamp -profile docker --input samplesheet.csv --library_type mpra \
+    --fasta pool.fa --bed sites.bed --bed_coordinates one_based_start \
+    --orientation_adapters pool --umi false --outdir results
 ```
 
-### Multiple runs of the same sample
+New in-cellulo data sequenced with the standard protocol (ONT adapters and UMIs) use the
+defaults; do **not** add these options.
 
-The `sample` identifiers have to be the same when you have re-sequenced the same sample more than once e.g. to increase sequencing depth. The pipeline will concatenate the raw reads before performing any downstream analysis. Below is an example for the same sample sequenced across 3 lanes:
+**Read funnel.** `metrics/read_funnel.tsv` lists only the steps that ran:
 
-```csv title="samplesheet.csv"
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-CONTROL_REP1,AEG588A1_S1_L003_R1_001.fastq.gz,AEG588A1_S1_L003_R2_001.fastq.gz
-CONTROL_REP1,AEG588A1_S1_L004_R1_001.fastq.gz,AEG588A1_S1_L004_R2_001.fastq.gz
-```
+| Mode | Steps |
+| ---- | ----- |
+| default (`ont`, `linked`, `umi`) | `raw, trim1_sense, trim1_antisense, antisense_rc, merged, umi_extracted, [trim2_pool], mapped, primary, mapq_filtered, dedup` |
+| `pool` + `umi=false` | `raw, trim1_sense, trim1_antisense, antisense_rc, merged, mapped, primary, mapq_filtered` |
+| `three_prime_only` | `raw, trim1_3prime, umi_extracted, [trim2_pool], mapped, primary, mapq_filtered, dedup` |
 
-### Full samplesheet
+`trim2_pool` appears for `--library_type mpra` with ONT orientation. Skipped steps are omitted,
+not written as zero. The pipeline log also prints a warning whenever a non-default mode is used.
 
-The pipeline will auto-detect whether a sample is single- or paired-end using the information provided in the samplesheet. The samplesheet can have as many columns as you desire, however, there is a strict requirement for the first 3 columns to match those defined in the table below.
+**Validation errors** (the run stops at startup):
 
-A final samplesheet file consisting of both single- and paired-end data may look something like the one below. This is for 6 samples, where `TREATMENT_REP3` has been sequenced twice.
-
-```csv title="samplesheet.csv"
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-CONTROL_REP2,AEG588A2_S2_L002_R1_001.fastq.gz,AEG588A2_S2_L002_R2_001.fastq.gz
-CONTROL_REP3,AEG588A3_S3_L002_R1_001.fastq.gz,AEG588A3_S3_L002_R2_001.fastq.gz
-TREATMENT_REP1,AEG588A4_S4_L003_R1_001.fastq.gz,
-TREATMENT_REP2,AEG588A5_S5_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L004_R1_001.fastq.gz,
-```
-
-| Column    | Description                                                                                                                                                                            |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sample`  | Custom sample name. This entry will be identical for multiple sequencing libraries/runs from the same sample. Spaces in sample names are automatically converted to underscores (`_`). |
-| `fastq_1` | Full path to FastQ file for Illumina short reads 1. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
-| `fastq_2` | Full path to FastQ file for Illumina short reads 2. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
-
-An [example samplesheet](../assets/samplesheet.csv) has been provided with the pipeline.
+- `--orientation_adapters pool` with `--umi true`: the UMI sits outside the pool adapters and would be trimmed away.
+- `--orientation_adapters pool` with `--library_type endogenous`: pool adapters exist only in MPRA libraries.
+- `--ont_adapter_mode three_prime_only` with `--orientation_adapters pool`.
+- An antisense adapter that is not the reverse complement of the matching sense adapter (ONT, and pool when used).
 
 ## Running the pipeline
 
-The typical command for running the pipeline is as follows:
-
 ```bash
-nextflow run rmrodell/nanomodamp --input ./samplesheet.csv --outdir ./results  -profile docker
+nextflow run rmrodell/nanomodamp -profile docker --input ./samplesheet.csv --library_type mpra \
+    --fasta pool.fa --bed sites.bed --bed_coordinates one_based_start \
+    --analyses analyses.yaml --outdir ./results
 ```
 
-This will launch the pipeline with the `docker` configuration profile. See below for more information about profiles.
+Test profiles: `test` (small synthetic dataset; until WP1 it is stub data and must be run with
+`-stub`), `test_golden` (paper data subset, `--golden_experiment endogenous_20250418 |
+endogenous_20251022 | mpra_invitro | mpra_incell`) and `test_full` (documented, not run in CI).
 
 Note that the pipeline will create the following files in your working directory:
 
@@ -69,28 +120,9 @@ work                # Directory containing the nextflow working files
 # Other nextflow hidden files, eg. history of pipeline runs and old logs.
 ```
 
-If you wish to repeatedly use the same parameters for multiple runs, rather than specifying each flag in the command, you can specify these in a params file.
-
-Pipeline settings can be provided in a `yaml` or `json` file via `-params-file <file>`.
-
-> [!WARNING]
-> Do not use `-c <file>` to specify parameters as this will result in errors. Custom config files specified with `-c` must only be used for [tuning process resource specifications](https://nf-co.re/docs/running/run-pipelines#configuring-pipelines), other infrastructural tweaks (such as output directories), or module arguments (args).
-
-The above pipeline run specified with a params file in yaml format:
-
-```bash
-nextflow run rmrodell/nanomodamp -profile docker -params-file params.yaml
-```
-
-with:
-
-```yaml title="params.yaml"
-input: './samplesheet.csv'
-outdir: './results/'
-<...>
-```
-
-You can also generate such `YAML`/`JSON` files via [nf-core/launch](https://nf-co.re/launch).
+Parameters can also be given in a YAML/JSON file with `-params-file params.yaml`. Do not use
+`-c <file>` to specify parameters, as this will result in errors; custom config files given
+with `-c` must only be used for tuning process resource specifications and similar settings.
 
 ### Updating the pipeline
 

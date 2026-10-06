@@ -1,0 +1,4 @@
+sample_id,fastq,treat,rep,celltype,vector
+HepG2_P102_1_BS,fastq/HepG2_P102_1_BS.fastq.gz,BS,1,HepG2,P102
+HepG2_P102_1_input,fastq/HepG2_P102_1_input.fastq.gz,input,1,HepG2,P102
+HepG2_P101_1_BS,fastq/barcode07/,BS,1,HepG2,P101

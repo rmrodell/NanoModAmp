@@ -1,33 +1,34 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/rmrodell/nanomodamp/master/assets/schema_input.json",
+    "$id": "https://raw.githubusercontent.com/rmrodell/NanoModAmp/main/assets/schema_input.json",
     "title": "rmrodell/nanomodamp pipeline - params.input schema",
-    "description": "Schema for the file provided with params.input",
+    "description": "Sample sheet contract (plan §5.1). Columns other than the four below are metadata and are carried into the merged counts.",
     "type": "array",
+    "uniqueEntries": ["sample_id"],
     "items": {
         "type": "object",
         "properties": {
-            "sample": {
+            "sample_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9._-]+$",
+                "errorMessage": "sample_id must be provided and may contain only letters, digits, '.', '_' and '-'"
+            },
+            "fastq": {
                 "type": "string",
                 "pattern": "^\\S+$",
-                "errorMessage": "Sample name must be provided and cannot contain spaces",
-                "meta": ["id"]
+                "errorMessage": "fastq must be a .fastq.gz file or a directory of .fastq.gz files (no spaces). Relative paths are resolved against the sample sheet's directory."
             },
-            "fastq_1": {
+            "treat": {
                 "type": "string",
-                "format": "file-path",
-                "exists": true,
-                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.f(ast)?q\\.gz$",
-                "errorMessage": "FastQ file for reads 1 must be provided, cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+                "enum": ["input", "BS"],
+                "errorMessage": "treat must be exactly 'input' or 'BS' (D14)"
             },
-            "fastq_2": {
-                "type": "string",
-                "format": "file-path",
-                "exists": true,
-                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.f(ast)?q\\.gz$",
-                "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+            "rep": {
+                "type": ["string", "integer"],
+                "pattern": "^\\S+$",
+                "errorMessage": "rep (batch-paired replicate, D17) must be provided and cannot contain spaces"
             }
         },
-        "required": ["sample", "fastq_1"]
+        "required": ["sample_id", "fastq", "treat", "rep"]
     }
 }

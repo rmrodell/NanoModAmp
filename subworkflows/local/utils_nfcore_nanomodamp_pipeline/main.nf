@@ -10,7 +10,6 @@
 
 include { UTILS_NFSCHEMA_PLUGIN     } from '../../nf-core/utils_nfschema_plugin'
 include { paramsSummaryMap          } from 'plugin/nf-schema'
-include { samplesheetToList         } from 'plugin/nf-schema'
 include { paramsHelp                } from 'plugin/nf-schema'
 include { completionEmail           } from '../../nf-core/utils_nfcore_pipeline'
 include { completionSummary         } from '../../nf-core/utils_nfcore_pipeline'
@@ -86,28 +85,22 @@ workflow PIPELINE_INITIALISATION {
     // Create channel from input file provided through params.input
     //
 
+    //
+    // Check parameter combinations the schema cannot express (D4, D29, D31, R-15)
+    //
+    validateInputParameters()
+
+    //
+    // Create channel from the sample sheet. The sheet was validated against
+    // assets/schema_input.json above; it is read here with all columns so that
+    // metadata columns are carried in meta (§5.1).
+    //
     channel
-        .fromList(samplesheetToList(input, "${projectDir}/assets/schema_input.json"))
-        .map {
-            meta, fastq_1, fastq_2 ->
-                if (!fastq_2) {
-                    return [ meta.id, meta + [ single_end:true ], [ fastq_1 ] ]
-                } else {
-                    return [ meta.id, meta + [ single_end:false ], [ fastq_1, fastq_2 ] ]
-                }
-        }
-        .groupTuple()
-        .map { samplesheet ->
-            validateInputSamplesheet(samplesheet)
-        }
-        .map {
-            meta, fastqs ->
-                return [ meta, fastqs.flatten() ]
-        }
+        .fromList(readSamplesheet(input))
         .set { ch_samplesheet }
 
     emit:
-    samplesheet = ch_samplesheet
+    samplesheet = ch_samplesheet // channel: [ meta, fastq file or directory ]
     versions    = ch_versions
 }
 
@@ -165,27 +158,150 @@ workflow PIPELINE_COMPLETION {
 //
 // Validate channels from input samplesheet
 //
-def validateInputSamplesheet(input) {
-    def (metas, fastqs) = input[1..2]
-
-    // Check that multiple runs of the same sample are of the same datatype i.e. single-end / paired-end
-    def endedness_ok = metas.collect{ meta -> meta.single_end }.unique().size == 1
-    if (!endedness_ok) {
-        error("Please check input samplesheet -> Multiple runs of a sample must be of the same datatype i.e. single-end or paired-end: ${metas[0].id}")
-    }
-
-    return [ metas[0], fastqs ]
+//
+// Reverse complement of a DNA sequence
+//
+def revcomp(String seq) {
+    return seq.toUpperCase().reverse().tr('ACGT', 'TGCA')
 }
+
 //
-// Generate methods description for MultiQC
+// Parameter rules that nextflow_schema.json cannot express
 //
+def validateInputParameters() {
+    def errors = []
+    if (!params.bed_coordinates) {
+        errors << "--bed_coordinates must be set to 'bed0' or 'one_based_start'; its default is decided at gate G1-e (R-15)."
+    }
+    if (revcomp(params.ont_adapter_sense_3p) != params.ont_adapter_antisense_5p.toUpperCase()) {
+        errors << "--ont_adapter_antisense_5p must be the reverse complement of --ont_adapter_sense_3p."
+    }
+    if (revcomp(params.ont_adapter_sense_5p) != params.ont_adapter_antisense_3p.toUpperCase()) {
+        errors << "--ont_adapter_antisense_3p must be the reverse complement of --ont_adapter_sense_5p."
+    }
+    // D29: pool orientation is an opt-in exception for legacy libraries without ONT adapters or UMIs
+    if (params.orientation_adapters == 'pool') {
+        if (params.library_type != 'mpra') {
+            errors << "--orientation_adapters pool requires --library_type mpra (pool adapters exist only in MPRA libraries)."
+        }
+        if (params.umi) {
+            errors << "--orientation_adapters pool cannot be combined with --umi true: the UMI sits outside the pool adapters and would be trimmed away. Set --umi false for libraries without UMIs (see docs/usage.md)."
+        }
+        if (revcomp(params.pool_adapter_3p) != params.pool_adapter_antisense_5p.toUpperCase()) {
+            errors << "--pool_adapter_antisense_5p must be the reverse complement of --pool_adapter_3p."
+        }
+        if (revcomp(params.pool_adapter_5p) != params.pool_adapter_antisense_3p.toUpperCase()) {
+            errors << "--pool_adapter_antisense_3p must be the reverse complement of --pool_adapter_5p."
+        }
+    }
+    // D31: 3′-only ONT trimming is an opt-in exception for legacy libraries without the 5′ ONT adapter
+    if (params.ont_adapter_mode == 'three_prime_only' && params.orientation_adapters != 'ont') {
+        errors << "--ont_adapter_mode three_prime_only is valid only with --orientation_adapters ont."
+    }
+    if (params.analyses) {
+        loadAnalysesConfig(params.analyses)
+    }
+    if (errors) {
+        error("Invalid parameters:\n  - " + errors.join("\n  - "))
+    }
+    if (params.orientation_adapters != 'ont' || !params.umi || params.ont_adapter_mode != 'linked') {
+        log.warn "Non-default preprocessing mode (orientation_adapters=${params.orientation_adapters}, ont_adapter_mode=${params.ont_adapter_mode}, umi=${params.umi}). " +
+            "These settings are only for legacy libraries built without ONT adapters, the 5′ ONT adapter, or UMIs; see docs/usage.md."
+    }
+}
+
+//
+// minimap2 arguments: explicit --minimap2_args, else by library type (D5)
+//
+def resolveMinimap2Args() {
+    if (params.minimap2_args) {
+        return params.minimap2_args
+    }
+    return params.library_type == 'mpra' ? '-ax sr' : '-ax splice -uf'
+}
+
+//
+// Read the sample sheet with all columns; resolve relative fastq paths against the
+// sheet's directory; check files, empty directories and duplicates (§5.1)
+//
+def readSamplesheet(input) {
+    def sheet = file(input, checkIfExists: true)
+    def rows = []
+    def seen = [] as Set
+    sheet.splitCsv(header: true, strip: true).eachWithIndex { row, i ->
+        if (row.values().every { v -> v == null || v.toString().trim() == '' }) {
+            log.warn "Sample sheet ${sheet.name}: ignoring blank line ${i + 2}"
+            return
+        }
+        def id = row.sample_id
+        if (id in seen) {
+            error("Sample sheet ${sheet.name}: duplicate sample_id '${id}'")
+        }
+        seen << id
+        def fq = row.fastq.toString()
+        def path = (fq.startsWith('/') || fq.contains('://')) ? file(fq) : file(sheet.parent.resolve(fq).toString())
+        if (!path.exists()) {
+            error("Sample sheet ${sheet.name}: fastq for '${id}' not found: ${path}")
+        }
+        if (path.isDirectory() && !path.listFiles().any { f -> f.name.endsWith('.fastq.gz') }) {
+            error("Sample sheet ${sheet.name}: fastq directory for '${id}' contains no *.fastq.gz files: ${path}")
+        }
+        if (!path.isDirectory() && !path.name.endsWith('.fastq.gz')) {
+            error("Sample sheet ${sheet.name}: fastq for '${id}' must be a .fastq.gz file or a directory: ${path}")
+        }
+        def meta = [id: id] + row.findAll { k, _v -> k != 'fastq' }
+        rows << [meta, path]
+    }
+    if (!rows) {
+        error("Sample sheet ${sheet.name} has no samples")
+    }
+    return rows
+}
+
+//
+// Load the analyses YAML and check what the pipeline needs to schedule tasks (§5.4).
+// Full validation against assets/schema_analyses.json happens in site calling (WP4).
+//
+def loadAnalysesConfig(analyses) {
+    def cfg = new org.yaml.snakeyaml.Yaml().load(file(analyses, checkIfExists: true).text)
+    def errors = []
+    if (!(cfg instanceof Map) || !(cfg.analyses instanceof List) || !cfg.analyses) {
+        error("--analyses ${analyses}: must contain a non-empty 'analyses' list (docs/contracts/analyses.md)")
+    }
+    def names = cfg.analyses.collect { a -> a.name }
+    if (names.any { n -> !(n ==~ /[A-Za-z0-9._-]+/) }) {
+        errors << "every analysis needs a name matching [A-Za-z0-9._-]+"
+    }
+    if (names.size() != names.unique(false).size()) {
+        errors << "analysis names must be unique"
+    }
+    cfg.analyses.each { a ->
+        if (!(a.type in ['treatment', 'factor'])) {
+            errors << "analysis '${a.name}': type must be 'treatment' or 'factor'"
+        }
+        if (a.type == 'factor' && (!a.factor || !(a.levels instanceof List) || a.levels.size() != 2)) {
+            errors << "factor analysis '${a.name}': needs 'factor' and 'levels: [baseline, experimental]'"
+        }
+    }
+    (cfg.site_sets ?: []).each { ss ->
+        def missing = (ss.of ?: []).findAll { n -> !(n in names) }
+        if (missing) {
+            errors << "site set '${ss.name}': unknown analyses ${missing}"
+        }
+    }
+    if (errors) {
+        error("--analyses ${analyses}:\n  - " + errors.join("\n  - "))
+    }
+    return cfg
+}
+
 def toolCitationText() {
     // TODO nf-core: Optionally add in-text citation tools to this list.
     // Can use ternary operators to dynamically construct based conditions, e.g. params["run_xyz"] ? "Tool (Foo et al. 2023)" : "",
     // Uncomment function in methodsDescriptionText to render in MultiQC report
     def citation_text = [
             "Tools used in the workflow included:",
-            "MultiQC (Ewels et al. 2016)",
+            "cutadapt, seqtk, UMI-tools, minimap2, SAMtools, UMICollapse, Rsamtools, blme and MultiQC (Ewels et al. 2016)",
             "."
         ].join(' ').trim()
 

@@ -1,0 +1,16 @@
+analyses:
+  - name: stub_treatment
+    type: treatment
+    subset: {celltype: [IV]}
+    random_effects: ""
+    sesoi: 0.05
+    fdr: 0.05
+  - name: stub_factor
+    type: factor
+    factor: vector
+    levels: [noPUS, PUS7]
+    direction: positive
+site_sets:
+  - name: stub_union
+    op: union
+    of: [stub_treatment, stub_factor]

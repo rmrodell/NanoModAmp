@@ -1,0 +1,12 @@
+sample_id	step	file	records	bytes
+HepG2_P102_1_BS	raw	HepG2_P102_1_BS.raw.fastq.gz	120000	35211873
+HepG2_P102_1_BS	trim1_sense	HepG2_P102_1_BS.trim1_sense.fastq.gz	51200	9622016
+HepG2_P102_1_BS	trim1_antisense	HepG2_P102_1_BS.trim1_antisense.fastq.gz	50100	9417290
+HepG2_P102_1_BS	antisense_rc	HepG2_P102_1_BS.antisense_rc.fastq.gz	50100	9417290
+HepG2_P102_1_BS	merged	HepG2_P102_1_BS.merged.fastq.gz	101300	19039306
+HepG2_P102_1_BS	umi_extracted	HepG2_P102_1_BS.umi_extracted.fastq.gz	101300	19846203
+HepG2_P102_1_BS	trim2_pool	HepG2_P102_1_BS.trim2_pool.fastq.gz	98700	17110412
+HepG2_P102_1_BS	mapped	HepG2_P102_1_BS.sorted.bam	99800	8120330
+HepG2_P102_1_BS	primary	HepG2_P102_1_BS.primary.bam	98200	7991204
+HepG2_P102_1_BS	mapq_filtered	HepG2_P102_1_BS.filtered.bam	90400	7360112
+HepG2_P102_1_BS	dedup	HepG2_P102_1_BS.dedup.bam	21800	1790221

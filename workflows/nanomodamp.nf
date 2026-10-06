@@ -4,6 +4,11 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 include { MULTIQC                } from '../modules/nf-core/multiqc/main'
+include { PREPROCESS             } from '../subworkflows/local/preprocess'
+include { COUNT_SITES            } from '../subworkflows/local/count'
+include { CALL                   } from '../subworkflows/local/call'
+include { resolveMinimap2Args    } from '../subworkflows/local/utils_nfcore_nanomodamp_pipeline'
+include { loadAnalysesConfig     } from '../subworkflows/local/utils_nfcore_nanomodamp_pipeline'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -18,7 +23,7 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_nano
 workflow NANOMODAMP {
 
     take:
-    ch_samplesheet // channel: samplesheet read in from --input
+    ch_samplesheet // channel: [ meta, fastq file or directory ] read in from --input
     multiqc_config
     multiqc_logo
     multiqc_methods_description
@@ -28,6 +33,29 @@ workflow NANOMODAMP {
 
     def ch_versions = channel.empty()
     def ch_multiqc_files = channel.empty()
+
+    def ch_fasta = channel.value(file(params.fasta, checkIfExists: true))
+    def ch_bed   = channel.value(file(params.bed, checkIfExists: true))
+
+    //
+    // SUBWORKFLOW: preprocessing per sample (§6.1; mode from orientation_adapters / ont_adapter_mode / umi)
+    //
+    PREPROCESS(ch_samplesheet, ch_fasta, resolveMinimap2Args())
+    PREPROCESS.out.funnel
+        .map { _meta, tsv -> tsv }
+        .collectFile(name: 'read_funnel.tsv', keepHeader: true, skip: 1, sort: true, storeDir: "${outdir}/metrics")
+
+    //
+    // SUBWORKFLOW: counting and merge (§6.2, §5.3)
+    //
+    COUNT_SITES(PREPROCESS.out.bam_bai, ch_fasta, ch_bed, channel.value(file(params.input, checkIfExists: true)))
+
+    //
+    // SUBWORKFLOW: site calling (§6.3–6.5), only when an analyses YAML is given
+    //
+    if (params.analyses) {
+        CALL(COUNT_SITES.out.merged, file(params.analyses, checkIfExists: true), loadAnalysesConfig(params.analyses))
+    }
 
     //
     // Collate and save software versions

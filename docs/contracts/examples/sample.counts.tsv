@@ -1,0 +1,3 @@
+chr	pos	gene	totalReads	A.count	C.count	G.count	T.count	Deletion.count	Insertion.count	ref	kmer	strand	delrate
+7SK.RN7SK_chr6_52995869	65	7SK;RN7SK	553	1	3	1	539	5	4	T	TGTAG	+	0.00904159132007233
+STIM1_chr11_4092507	65	STIM1	812	2	4	1	503	298	4	T	GTTCA	+	0.366995073891626
