@@ -4,7 +4,7 @@ Plan: [plan.md](plan.md) · Decisions: [docs/DECISIONS.md](docs/DECISIONS.md) ·
 
 | WP | Branch | Status | Notes |
 |---|---|---|---|
-| WP0 Scaffold and contracts | `wp/0-scaffold` | **Ready for G0 review** | nf-core template (tools 4.1.0), all §3 params incl. D29/D31, schemas, contracts, stubbed processes; `-profile test -stub` passes on Nextflow 25.04.7 in all three preprocessing modes; CI workflows added (first GitHub run pending) |
+| WP0 Scaffold and contracts | `wp/0-scaffold` | **Ready for G0 review** | nf-core template (tools 4.1.0), all §3 params incl. D29/D31, schemas, contracts, stubbed processes; `-profile test -stub` passes on Nextflow 25.04.7 in all three preprocessing modes and counting-only; validation errors checked; `nf-core pipelines lint` 0 failures (documented ignores in `.nf-core.yml`); CI in `.github/workflows/ci.yml` (nf-test not run locally: not installed on Sherlock) |
 | WP1 Simulator | — | Not started | Can start after G0 |
 | WP2 Preprocessing | — | Not started | Stub modules in `modules/local/`; D29/D31 branches wired in `subworkflows/local/preprocess.nf` |
 | WP3 Counting | — | Not started | |

@@ -1,10 +1,10 @@
 /*
     COUNT: final BAMs -> per-sample counts -> counts_merged.tsv (plan §6.2, §5.3; D9, D10, D12)
 */
-include { SAMTOOLS_FAIDX } from '../../modules/local/samtools_faidx'
-include { COUNT          } from '../../modules/local/count'
-include { MERGE_COUNTS   } from '../../modules/local/merge_counts'
-include { BACKGROUND_QC  } from '../../modules/local/background_qc'
+include { SAMTOOLS_FAIDX } from '../../../modules/local/samtools_faidx'
+include { COUNT          } from '../../../modules/local/count'
+include { MERGE_COUNTS   } from '../../../modules/local/merge_counts'
+include { BACKGROUND_QC  } from '../../../modules/local/background_qc'
 
 workflow COUNT_SITES {
     take:

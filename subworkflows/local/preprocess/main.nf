@@ -7,21 +7,21 @@
       umi                  = true  (default) | false  (opt-in, legacy libraries without UMIs)
     The MPRA pool trim runs only for library_type 'mpra' with ONT orientation.
 */
-include { CAT_FASTQ                                  } from '../../modules/local/cat_fastq'
-include { CUTADAPT_3PRIME                            } from '../../modules/local/cutadapt_3prime'
-include { CUTADAPT_LINKED as CUTADAPT_SENSE          } from '../../modules/local/cutadapt_linked'
-include { CUTADAPT_LINKED as CUTADAPT_ANTISENSE      } from '../../modules/local/cutadapt_linked'
-include { CUTADAPT_LINKED as CUTADAPT_POOL           } from '../../modules/local/cutadapt_linked'
-include { SEQTK_RC                                   } from '../../modules/local/seqtk_rc'
-include { MERGE_ORIENT                               } from '../../modules/local/merge_orient'
-include { UMITOOLS_EXTRACT                           } from '../../modules/local/umitools_extract'
-include { MINIMAP2_ALIGN                             } from '../../modules/local/minimap2_align'
-include { SAMTOOLS_SORT                              } from '../../modules/local/samtools_sort'
-include { SAMTOOLS_FILTER                            } from '../../modules/local/samtools_filter'
-include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_FILTERED  } from '../../modules/local/samtools_index'
-include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_DEDUP     } from '../../modules/local/samtools_index'
-include { UMICOLLAPSE                                } from '../../modules/local/umicollapse'
-include { READ_FUNNEL                                } from '../../modules/local/read_funnel'
+include { CAT_FASTQ                                  } from '../../../modules/local/cat_fastq'
+include { CUTADAPT_3PRIME                            } from '../../../modules/local/cutadapt_3prime'
+include { CUTADAPT_LINKED as CUTADAPT_SENSE          } from '../../../modules/local/cutadapt_linked'
+include { CUTADAPT_LINKED as CUTADAPT_ANTISENSE      } from '../../../modules/local/cutadapt_linked'
+include { CUTADAPT_LINKED as CUTADAPT_POOL           } from '../../../modules/local/cutadapt_linked'
+include { SEQTK_RC                                   } from '../../../modules/local/seqtk_rc'
+include { MERGE_ORIENT                               } from '../../../modules/local/merge_orient'
+include { UMITOOLS_EXTRACT                           } from '../../../modules/local/umitools_extract'
+include { MINIMAP2_ALIGN                             } from '../../../modules/local/minimap2_align'
+include { SAMTOOLS_SORT                              } from '../../../modules/local/samtools_sort'
+include { SAMTOOLS_FILTER                            } from '../../../modules/local/samtools_filter'
+include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_FILTERED  } from '../../../modules/local/samtools_index'
+include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_DEDUP     } from '../../../modules/local/samtools_index'
+include { UMICOLLAPSE                                } from '../../../modules/local/umicollapse'
+include { READ_FUNNEL                                } from '../../../modules/local/read_funnel'
 
 workflow PREPROCESS {
     take:

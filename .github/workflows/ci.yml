@@ -1,0 +1,127 @@
+name: CI
+# Plan §7 WP0 / §8: stub end-to-end runs, nf-test, R testthat and pytest on every push and PR.
+# nf-core lint runs in linting.yml. Singularity is a separate, optional job.
+on:
+  push:
+    branches: [main, dev, "wp/**"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      run_singularity:
+        description: "Also run the optional Singularity job"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NXF_ANSI_LOG: false
+  NFT_VER: "0.9.4"
+  NXF_SINGULARITY_CACHEDIR: ${{ github.workspace }}/.singularity
+
+jobs:
+  stub-run:
+    # -profile test,docker -stub end to end, in every preprocessing mode (D29, D31)
+    name: "stub | docker | ${{ matrix.mode.name }} | NXF ${{ matrix.NXF_VER }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        NXF_VER: ["25.04.7", "latest-everything"]
+        mode:
+          - name: default
+            args: ""
+          - name: pool-no-umi
+            args: "--orientation_adapters pool --umi false"
+          - name: three-prime-only
+            args: "--library_type endogenous --ont_adapter_mode three_prime_only"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: nf-core/setup-nextflow@893c28b667aedeba26e37f296d260ccc5bc4d914 # v3
+        with:
+          version: ${{ matrix.NXF_VER }}
+      - name: Run pipeline in stub mode
+        run: nextflow run ${GITHUB_WORKSPACE} -profile test,docker -stub --outdir ./results ${{ matrix.mode.args }}
+      - name: Show read funnel
+        run: cat results/metrics/read_funnel.tsv
+
+  nf-test:
+    name: "nf-test | docker"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: nf-core/setup-nextflow@893c28b667aedeba26e37f296d260ccc5bc4d914 # v3
+        with:
+          version: "25.04.7"
+      - uses: nf-core/setup-nf-test@4069fbbaabe94c08faba4ad261bfa88225ba133f # v2
+        with:
+          version: ${{ env.NFT_VER }}
+      - name: Run nf-test
+        run: nf-test test --profile=+docker --verbose --junitxml=TEST-nf-test.xml
+      - name: Publish test report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: nf-test-report
+          path: TEST-nf-test.xml
+
+  r-testthat:
+    # nanomodamp R package (WP3, WP4); skipped until R/nanomodamp exists
+    name: "R testthat"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Check for R package
+        id: pkg
+        run: echo "present=$([ -f R/nanomodamp/DESCRIPTION ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - uses: r-lib/actions/setup-r@v2
+        if: steps.pkg.outputs.present == 'true'
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        if: steps.pkg.outputs.present == 'true'
+        with:
+          working-directory: R/nanomodamp
+          extra-packages: any::testthat, any::devtools
+      - name: Run testthat
+        if: steps.pkg.outputs.present == 'true'
+        run: Rscript -e 'devtools::test("R/nanomodamp", stop_on_failure = TRUE)'
+      - name: No R package yet
+        if: steps.pkg.outputs.present != 'true'
+        run: echo "R/nanomodamp not present yet (WP3/WP4); nothing to test."
+
+  pytest:
+    # simulator (WP1) and dev/ helpers; skipped until Python tests exist
+    name: "pytest"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.12"
+      - name: Run pytest
+        run: |
+          if ls tests/simulate/test_*.py dev/**/test_*.py >/dev/null 2>&1; then
+            pip install pytest
+            [ -f tests/simulate/requirements.txt ] && pip install -r tests/simulate/requirements.txt
+            pytest -q tests/simulate dev
+          else
+            echo "No Python tests yet (WP1); nothing to test."
+          fi
+
+  singularity:
+    # Optional (plan §8): manual trigger only; failures do not block
+    name: "stub | singularity (optional)"
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_singularity }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: nf-core/setup-nextflow@893c28b667aedeba26e37f296d260ccc5bc4d914 # v3
+        with:
+          version: "25.04.7"
+      - uses: eWaterCycle/setup-apptainer@3f706d898c9db585b1d741b4692e66755f3a1b40 # v2.0.0
+        with:
+          apptainer-version: 1.3.4
+      - name: Run pipeline in stub mode
+        run: nextflow run ${GITHUB_WORKSPACE} -profile test,singularity -stub --outdir ./results

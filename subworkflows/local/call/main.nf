@@ -2,8 +2,8 @@
     CALL: counts_merged.tsv + analyses YAML -> one CALL_SITES task per analysis, then site sets
     (plan §6.3–6.5, §5.4, §5.5)
 */
-include { CALL_SITES } from '../../modules/local/call_sites'
-include { SITE_SETS  } from '../../modules/local/site_sets'
+include { CALL_SITES } from '../../../modules/local/call_sites'
+include { SITE_SETS  } from '../../../modules/local/site_sets'
 
 workflow CALL {
     take:

@@ -1,33 +1,74 @@
 nextflow_pipeline {
 
-    name "Test pipeline"
+    name "Test pipeline (WP0 stub wiring)"
     script "../main.nf"
     tag "pipeline"
+    options "-stub"
 
-    test("-profile test") {
-
+    test("-profile test: defaults (ont, linked, umi), mpra") {
         when {
             params {
                 outdir = "$outputDir"
             }
         }
-
         then {
-            // stable_path: All files + folders in ${params.outdir}/ with a stable path (including file name)
-            def stable_path = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
-            // stable_content: All files in ${params.outdir}/ with stable content
-            def stable_content = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+            def steps = path("${params.outdir}/metrics/read_funnel.tsv").readLines().drop(1)
+                .collect { line -> line.split('\t') }.findAll { f -> f[0] == 'S1_BS' }.collect { f -> f[1] }
             assert workflow.success
-            assertAll(
-                { assert snapshot(
-                    // pipeline versions.yml file for multiqc from which Nextflow version is removed because we test pipelines on multiple Nextflow versions
-                    removeNextflowVersion("$outputDir/pipeline_info/nanomodamp_software_mqc_versions.yml"),
-                    // All stable path name, with a relative path
-                    stable_path,
-                    // All files with stable contents
-                    stable_content
-                ).match() }
-            )
+            assert steps == ['raw', 'trim1_sense', 'trim1_antisense', 'antisense_rc', 'merged',
+                             'umi_extracted', 'trim2_pool', 'mapped', 'primary', 'mapq_filtered', 'dedup']
+            assert path("${params.outdir}/bam/S2_input.bam").exists()
+            assert path("${params.outdir}/counts/counts_merged.tsv").exists()
+            assert path("${params.outdir}/calling/stub_treatment").exists()
+            assert path("${params.outdir}/calling/stub_factor").exists()
+            assert path("${params.outdir}/site_sets").exists()
+        }
+    }
+
+    test("-profile test: legacy library without ONT adapters or UMIs (D29)") {
+        when {
+            params {
+                outdir               = "$outputDir"
+                orientation_adapters = 'pool'
+                umi                  = false
+            }
+        }
+        then {
+            def steps = path("${params.outdir}/metrics/read_funnel.tsv").readLines().drop(1)
+                .collect { line -> line.split('\t') }.findAll { f -> f[0] == 'S1_BS' }.collect { f -> f[1] }
+            assert workflow.success
+            assert steps == ['raw', 'trim1_sense', 'trim1_antisense', 'antisense_rc', 'merged',
+                             'mapped', 'primary', 'mapq_filtered']
+            assert path("${params.outdir}/bam/S1_BS.bam").exists()
+        }
+    }
+
+    test("-profile test: legacy library without the 5' ONT adapter (D31), endogenous") {
+        when {
+            params {
+                outdir           = "$outputDir"
+                library_type     = 'endogenous'
+                ont_adapter_mode = 'three_prime_only'
+            }
+        }
+        then {
+            def steps = path("${params.outdir}/metrics/read_funnel.tsv").readLines().drop(1)
+                .collect { line -> line.split('\t') }.findAll { f -> f[0] == 'S1_BS' }.collect { f -> f[1] }
+            assert workflow.success
+            assert steps == ['raw', 'trim1_3prime', 'umi_extracted', 'mapped', 'primary', 'mapq_filtered', 'dedup']
+        }
+    }
+
+    test("-profile test: pool orientation with UMIs is rejected (D29)") {
+        when {
+            params {
+                outdir               = "$outputDir"
+                orientation_adapters = 'pool'
+            }
+        }
+        then {
+            assert workflow.failed
+            assert (workflow.stdout + workflow.stderr).any { line -> line.contains('--orientation_adapters pool cannot be combined with --umi true') }
         }
     }
 }

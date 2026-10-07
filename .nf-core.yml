@@ -1,2 +1,41 @@
 repository_type: pipeline
 nf_core_version: "4.1.0"
+template:
+  name: nanomodamp
+  org: rmrodell
+  author: Rebecca Rodell
+  description: Nano-BID-Amp pseudouridine site calling from demultiplexed Nanopore amplicon FASTQ
+  version: 1.0.0dev
+  is_nfcore: false
+  outdir: .
+  force: true
+  skip_features:
+    - igenomes
+    - fastqc
+    - gitpod
+    - codespaces
+    - seqera_platform
+    - gpu
+    - adaptivecard
+    - slackreport
+# Intentional deviations from the nf-core template (WP0, 2026-10-06):
+#  - CI is .github/workflows/ci.yml (stub runs per preprocessing mode, nf-test, testthat, pytest)
+#    instead of the template's sharded nf-test.yml.
+#  - Not an nf-core organisation pipeline: no code of conduct file or nf-core logos.
+#  - .gitignore anchors data/ to the repo root so tests/data/ can be committed.
+#  - Container config files are generated once WP2-WP4 pin real containers; the stub
+#    tests do not snapshot versions.yml yet.
+lint:
+  files_exist:
+    - CODE_OF_CONDUCT.md
+    - .github/workflows/nf-test.yml
+    - assets/nf-core-nanomodamp_logo_light.png
+    - docs/images/nf-core-nanomodamp_logo_light.png
+    - docs/images/nf-core-nanomodamp_logo_dark.png
+  files_unchanged:
+    - .github/workflows/branch.yml
+    - .gitignore
+  multiqc_config:
+    - report_comment
+  container_configs: false
+  nf_test_content: false
