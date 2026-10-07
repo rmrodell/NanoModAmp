@@ -95,8 +95,9 @@ workflow PIPELINE_INITIALISATION {
     // assets/schema_input.json above; it is read here with all columns so that
     // metadata columns are carried in meta (§5.1).
     //
+    // With --input_counts (D32) there is no sample sheet: preprocessing and counting are skipped
     channel
-        .fromList(readSamplesheet(input))
+        .fromList(input ? readSamplesheet(input) : [])
         .set { ch_samplesheet }
 
     emit:
@@ -170,8 +171,25 @@ def revcomp(String seq) {
 //
 def validateInputParameters() {
     def errors = []
-    if (!params.bed_coordinates) {
-        errors << "--bed_coordinates must be set to 'bed0' or 'one_based_start'; its default is decided at gate G1-e (R-15)."
+    // D32: exactly one of --input (sample sheet) and --input_counts (merged count tables)
+    if (params.input && params.input_counts) {
+        errors << "--input and --input_counts are mutually exclusive: use --input to process FASTQs, or --input_counts to merge count tables from earlier runs and call sites."
+    }
+    if (!params.input && !params.input_counts) {
+        errors << "Provide --input (sample sheet) or --input_counts (counts_merged.tsv tables from earlier runs)."
+    }
+    if (params.input_counts) {
+        resolveInputCounts(params.input_counts)
+    }
+    if (params.input) {
+        ['library_type', 'fasta', 'bed'].each { p ->
+            if (!params[p]) {
+                errors << "--${p} is required with --input."
+            }
+        }
+        if (!params.bed_coordinates) {
+            errors << "--bed_coordinates must be set to 'bed0' or 'one_based_start'; its default is decided at gate G1-e (R-15)."
+        }
     }
     if (revcomp(params.ont_adapter_sense_3p) != params.ont_adapter_antisense_5p.toUpperCase()) {
         errors << "--ont_adapter_antisense_5p must be the reverse complement of --ont_adapter_sense_3p."
@@ -208,6 +226,39 @@ def validateInputParameters() {
         log.warn "Non-default preprocessing mode (orientation_adapters=${params.orientation_adapters}, ont_adapter_mode=${params.ont_adapter_mode}, umi=${params.umi}). " +
             "These settings are only for legacy libraries built without ONT adapters, the 5′ ONT adapter, or UMIs; see docs/usage.md."
     }
+}
+
+//
+// --input_counts (D32): comma-separated counts_merged.tsv files, or directories of *.tsv files
+//
+def resolveInputCounts(input_counts) {
+    def tables = []
+    input_counts.toString().tokenize(',')*.trim().findAll { p -> p }.each { p ->
+        def f = file(p)
+        if (!f.exists()) {
+            error("--input_counts: not found: ${p}")
+        }
+        if (f.isDirectory()) {
+            def tsvs = f.listFiles().findAll { g -> g.name.endsWith('.tsv') }.sort { g -> g.name }
+            if (!tsvs) {
+                error("--input_counts: directory contains no .tsv files: ${p}")
+            }
+            tables.addAll(tsvs)
+        } else {
+            tables << f
+        }
+    }
+    tables.each { t ->
+        def header = t.withReader { r -> r.readLine() }?.split('\t') as List
+        def missing = ['sample_id', 'chr', 'pos', 'totalReads', 'delrate'].findAll { c -> !(c in header) }
+        if (missing) {
+            error("--input_counts: ${t} is not a counts_merged.tsv table (missing columns ${missing}; docs/contracts/counts.md)")
+        }
+    }
+    if (tables.size() != tables.unique(false).size()) {
+        error("--input_counts: the same table is given more than once")
+    }
+    return tables
 }
 
 //

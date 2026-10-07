@@ -71,4 +71,37 @@ nextflow_pipeline {
             assert (workflow.stdout + workflow.stderr).any { line -> line.contains('--orientation_adapters pool cannot be combined with --umi true') }
         }
     }
+
+    test("-profile test: --input_counts merges count tables and calls sites (D32)") {
+        when {
+            params {
+                outdir       = "$outputDir"
+                input        = null
+                input_counts = "${baseDir}/tests/data/stub/counts/run_a/counts_merged.tsv,${baseDir}/tests/data/stub/counts/run_b/counts_merged.tsv"
+            }
+        }
+        then {
+            def sources = path("${params.outdir}/counts/merge_sources.tsv").readLines().drop(1)
+                .collect { line -> line.split('\t')[0] }
+            assert workflow.success
+            assert sources == ['S1_BS', 'S1_input', 'S2_BS', 'S2_input']
+            assert path("${params.outdir}/counts/counts_merged.tsv").readLines().size() == 5
+            assert path("${params.outdir}/calling/stub_treatment").exists()
+            assert !path("${params.outdir}/metrics").exists()
+            assert !path("${params.outdir}/bam").exists()
+        }
+    }
+
+    test("-profile test: --input and --input_counts together are rejected (D32)") {
+        when {
+            params {
+                outdir       = "$outputDir"
+                input_counts = "${baseDir}/tests/data/stub/counts/run_a/counts_merged.tsv"
+            }
+        }
+        then {
+            assert workflow.failed
+            assert (workflow.stdout + workflow.stderr).any { line -> line.contains('--input and --input_counts are mutually exclusive') }
+        }
+    }
 }

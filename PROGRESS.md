@@ -22,7 +22,7 @@ Plan: [plan.md](plan.md) · Decisions: [docs/DECISIONS.md](docs/DECISIONS.md) ·
 
 1. **Nextflow minimum version.** The nf-core 4.1.0 template requires Nextflow ≥ 25.10.4; Sherlock's newest module is 25.04.7. WP0 relaxed the pin to `>=25.04.7` and verified the stub runs there. Keep 25.04.7 as the minimum, or require 25.10 (then Sherlock users need their own Nextflow install)?
 2. **`bed_coordinates` default** (R-15, G1-e): currently required with no default.
-3. **Golden endogenous across two runs.** Preprocessing parameters are per run, and the golden endogenous samples need different trimming per run (20250418 `three_prime_only`, 20251022 `linked`), so `test_golden` has separate `endogenous_20250418` and `endogenous_20251022` experiments. Site calling across both runs needs either a counts-level merge step (e.g. `--counts_merged` input for calling only) or per-sample preprocessing parameters in the sample sheet. Decide at G0.
+3. ~~Golden endogenous across two runs~~ — **decided 2026-10-06 (D32):** merge at the counts level with `--input_counts`; implemented as a stub (`MERGE_COUNT_TABLES`, WP3 implements it; WP2/WP3 test 15).
 4. **Containers.** Stub modules use a placeholder `ubuntu:22.04` image; WP2–WP4 pin real containers.
 5. **Boolean CLI flags on Nextflow edge.** Nextflow 26.09.2-edge rejects `--umi false` given on the command line ("Value is [string] but should be [boolean]"); 25.04.7 accepts it. CI runs `latest-everything` as non-blocking. If stable releases keep this behaviour, document `-params-file` (or `--umi=false` alternatives) for boolean options.
 6. Endogenous random effects in `analyses_example.yaml` (`(1|vector)` vs `(1|celltype)`; plan §10).

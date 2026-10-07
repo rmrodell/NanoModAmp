@@ -7,6 +7,8 @@ include { MULTIQC                } from '../modules/nf-core/multiqc/main'
 include { PREPROCESS             } from '../subworkflows/local/preprocess'
 include { COUNT_SITES            } from '../subworkflows/local/count'
 include { CALL                   } from '../subworkflows/local/call'
+include { MERGE_COUNT_TABLES     } from '../modules/local/merge_count_tables'
+include { resolveInputCounts     } from '../subworkflows/local/utils_nfcore_nanomodamp_pipeline'
 include { resolveMinimap2Args    } from '../subworkflows/local/utils_nfcore_nanomodamp_pipeline'
 include { loadAnalysesConfig     } from '../subworkflows/local/utils_nfcore_nanomodamp_pipeline'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
@@ -34,27 +36,38 @@ workflow NANOMODAMP {
     def ch_versions = channel.empty()
     def ch_multiqc_files = channel.empty()
 
-    def ch_fasta = channel.value(file(params.fasta, checkIfExists: true))
-    def ch_bed   = channel.value(file(params.bed, checkIfExists: true))
+    def ch_counts_merged
+    if (params.input_counts) {
+        //
+        // D32: merge counts_merged.tsv tables from earlier runs; no preprocessing or counting
+        //
+        def count_tables = resolveInputCounts(params.input_counts)
+        MERGE_COUNT_TABLES(channel.fromList(count_tables).collect(), count_tables*.toString())
+        ch_counts_merged = MERGE_COUNT_TABLES.out.merged
+    } else {
+        def ch_fasta = channel.value(file(params.fasta, checkIfExists: true))
+        def ch_bed   = channel.value(file(params.bed, checkIfExists: true))
 
-    //
-    // SUBWORKFLOW: preprocessing per sample (§6.1; mode from orientation_adapters / ont_adapter_mode / umi)
-    //
-    PREPROCESS(ch_samplesheet, ch_fasta, resolveMinimap2Args())
-    PREPROCESS.out.funnel
-        .map { _meta, tsv -> tsv }
-        .collectFile(name: 'read_funnel.tsv', keepHeader: true, skip: 1, sort: true, storeDir: "${outdir}/metrics")
+        //
+        // SUBWORKFLOW: preprocessing per sample (§6.1; mode from orientation_adapters / ont_adapter_mode / umi)
+        //
+        PREPROCESS(ch_samplesheet, ch_fasta, resolveMinimap2Args())
+        PREPROCESS.out.funnel
+            .map { _meta, tsv -> tsv }
+            .collectFile(name: 'read_funnel.tsv', keepHeader: true, skip: 1, sort: true, storeDir: "${outdir}/metrics")
 
-    //
-    // SUBWORKFLOW: counting and merge (§6.2, §5.3)
-    //
-    COUNT_SITES(PREPROCESS.out.bam_bai, ch_fasta, ch_bed, channel.value(file(params.input, checkIfExists: true)))
+        //
+        // SUBWORKFLOW: counting and merge (§6.2, §5.3)
+        //
+        COUNT_SITES(PREPROCESS.out.bam_bai, ch_fasta, ch_bed, channel.value(file(params.input, checkIfExists: true)))
+        ch_counts_merged = COUNT_SITES.out.merged
+    }
 
     //
     // SUBWORKFLOW: site calling (§6.3–6.5), only when an analyses YAML is given
     //
     if (params.analyses) {
-        CALL(COUNT_SITES.out.merged, file(params.analyses, checkIfExists: true), loadAnalysesConfig(params.analyses))
+        CALL(ch_counts_merged, file(params.analyses, checkIfExists: true), loadAnalysesConfig(params.analyses))
     }
 
     //

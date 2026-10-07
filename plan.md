@@ -54,6 +54,7 @@
 | D27 | BED coordinate convention | **Unknown.** WP5 must work it out from the golden data (see R-15) and raise it at Gate G1. |
 | D29 | Libraries without ONT adapters or UMIs (2026-10-06) | Two per-run parameters: `orientation_adapters` (default `ont`) and `umi` (default `true`). **The defaults always apply, for endogenous, MPRA in vitro and MPRA in cellulo data alike: ONT trimming, UMI extraction and deduplication.** `orientation_adapters=pool, umi=false` is an opt-in exception that exists only so the golden package can run the paper's in-cellulo samples (run 20241114), which were sequenced from a library built without ONT adapters or UMIs. It is set only in `conf/test_golden.config` for those samples, never by default or by `library_type` (R-26). |
 | D31 | 3′-only ONT adapter libraries (2026-10-06) | Opt-in per-run parameter `ont_adapter_mode` (default `linked`: both ONT adapters required, D4). `three_prime_only` reproduces the legacy trim for libraries whose reads lack the 5′ ONT adapter: one pass `cutadapt -m {trim1_min_length} -O {trim1_min_overlap} -a <S3>`, untrimmed reads kept, no antisense pass or RC. It exists only for the golden endogenous samples from paper run 20250418 and is set only for them in `conf/test_golden.config`; the default applies to all other data (R-29). |
+| D32 | Merging runs at the counts level (2026-10-06) | Runs that need different preprocessing parameters (e.g. golden endogenous 20250418 with `ont_adapter_mode=three_prime_only` and 20251022 with defaults) are preprocessed and counted separately, then merged at the **counts** level for site calling. New parameter `input_counts`: one or more `counts_merged.tsv` files (§5.3) from earlier runs; when set, preprocessing and counting are skipped, the tables are merged by column name (R-06), and calling runs on the merged table. Used by `test_golden` for endogenous. |
 | D30 | Three-way golden comparison (2026-10-06) | The golden package is rerun with **both** the legacy scripts (what produced the paper numbers) and the published Figure 2/3 scripts. Both outputs are kept (`expected/legacy_rerun/`, `expected/published_rerun/`) and the new pipeline is compared against each in WP7. |
 
 ---
@@ -153,6 +154,7 @@ CHANGE_REGISTER.md  PROGRESS.md  CHANGELOG.md  CITATION.cff
 | `count_all_bases` | `false` | D12 QC mode: emits all-base counts + background report |
 | `kmer_size` | `5` | Centered; NA near ends |
 | `analyses` | — | YAML file of analyses (§5.4); if absent, counting only |
+| `input_counts` | — | D32. Comma-separated `counts_merged.tsv` paths (or a directory of them). Skips preprocessing/counting; merges by name, then calls. Mutually exclusive with `input`. Errors: duplicate `sample_id` across tables; differing count/site columns. Metadata columns are the union (missing → NA, with a warning). Sites missing in a sample are simply absent (no fill). |
 | `plot_all_sites` | `false` | Per-analysis override allowed |
 | `allow_region_failures` | `false` | If false, any per-region counting error fails the task (R-12) |
 | `outdir` | `results` | |
@@ -224,7 +226,7 @@ Per-sample file `<sample>.counts.tsv`. Column names and order are **exactly** as
 chr pos gene totalReads A.count C.count G.count T.count Deletion.count Insertion.count ref kmer strand delrate
 ```
 
-`counts_merged.tsv` = `sample_id` + all sample-sheet metadata columns (in sample-sheet order) + the per-sample columns above. Tables are **joined by column name, never by position** (R-06). Types: `pos` is an integer, and the count columns are integers.
+`counts_merged.tsv` = `sample_id` + all sample-sheet metadata columns (in sample-sheet order) + the per-sample columns above. With `input_counts` (D32), several such tables are merged into one with the same layout (metadata columns in first-seen order), written as `counts/counts_merged.tsv` plus `counts/merge_sources.tsv` (sample_id → source table). Tables are **joined by column name, never by position** (R-06). Types: `pos` is an integer, and the count columns are integers.
 
 ### 5.4 Analyses config (`assets/schema_analyses.json`)
 ```yaml
@@ -407,6 +409,7 @@ The Orchestrator runs WP0 itself. It then spawns one agent per WP in WP1–WP6, 
   12. `-profile test` works with both library types.
   13. `orientation_adapters=pool, umi=false` (D29): a pool-flanked read without ONT adapters or UMI is kept, oriented and mapped; no UMI step or dedup runs; the funnel omits the skipped steps; `pool` + `umi=true` and `pool` with `library_type=endogenous` fail validation.
   14. `ont_adapter_mode=three_prime_only` (D31): a read with only the 3′ ONT adapter is kept and trimmed at the 3′ end; output equals legacy `cutadapt -m 125 -O 15 -a GAAGATAGAGCGACAGGCAAGT` on the same reads; the default `linked` discards it.
+  15. (WP3) `input_counts` (D32): two tables merge into the same result as one table with all samples; duplicate `sample_id` and mismatched columns fail clearly; shuffled column order gives the same result.
 - **Accept when:** all tests pass, and the minimap2 defaults resolve by library type and can be overridden.
 
 ### WP3 — Counting, merge and background QC (R)

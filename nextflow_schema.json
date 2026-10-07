@@ -11,7 +11,6 @@
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
             "required": [
-                "input",
                 "outdir"
             ],
             "properties": {
@@ -22,9 +21,16 @@
                     "schema": "assets/schema_input.json",
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
-                    "description": "Path to the sample sheet (CSV) describing the samples of one run.",
+                    "description": "Path to the sample sheet (CSV) describing the samples of one run. Use either --input or --input_counts.",
                     "help_text": "Comma-separated sample sheet with a header row. Required columns: `sample_id`, `fastq` (a `.fastq.gz` file or a directory whose `*.fastq.gz` files are concatenated in lexical order), `treat` (`input` or `BS`) and `rep` (batch-paired replicate). Any other column is carried as metadata. Relative `fastq` paths are resolved against the sample sheet's directory. See docs/usage.md and docs/contracts/samplesheet.md.",
                     "fa_icon": "fas fa-file-csv"
+                },
+                "input_counts": {
+                    "type": "string",
+                    "description": "Comma-separated `counts_merged.tsv` files from earlier runs, or a directory of them. Skips preprocessing and counting; the tables are merged and site calling runs on the result. Use either --input or --input_counts.",
+                    "help_text": "D32. For runs that need different preprocessing parameters (for example a legacy library and a standard one): run each with --input and no --analyses, then merge their counts/counts_merged.tsv with --input_counts and --analyses. Tables are merged by column name (R-06); metadata columns are the union (missing values become NA, with a warning). Duplicate sample_id across tables or differing count/site columns stop the run. Output: counts/counts_merged.tsv and counts/merge_sources.tsv.",
+                    "pattern": "^\\S+$",
+                    "fa_icon": "fas fa-table"
                 },
                 "outdir": {
                     "type": "string",
@@ -50,12 +56,8 @@
             "title": "Library and reference options",
             "type": "object",
             "fa_icon": "fas fa-dna",
-            "description": "Library type, reference sequences and target regions.",
-            "required": [
-                "library_type",
-                "fasta",
-                "bed"
-            ],
+            "description": "Library type, reference sequences and target regions. Required with --input (not used with --input_counts).",
+            "required": [],
             "properties": {
                 "library_type": {
                     "type": "string",
@@ -327,10 +329,11 @@
                 "golden_experiment": {
                     "type": "string",
                     "description": "Golden experiment to run with `-profile test_golden`.",
-                    "help_text": "One golden run per paper sequencing run. The only places the pipeline sets non-default preprocessing modes: `endogenous_20250418` uses `ont_adapter_mode=three_prime_only` (D31) and `mpra_incell` (run 20241114) uses `orientation_adapters=pool, umi=false` (D29), because those libraries were built without the 5′ ONT adapter or without ONT adapters and UMIs.",
+                    "help_text": "One golden run per paper sequencing run. The only places the pipeline sets non-default preprocessing modes: `endogenous_20250418` uses `ont_adapter_mode=three_prime_only` (D31) and `mpra_incell` (run 20241114) uses `orientation_adapters=pool, umi=false` (D29), because those libraries were built without the 5′ ONT adapter or without ONT adapters and UMIs. Endogenous takes three runs (D32): `endogenous_20250418` and `endogenous_20251022` preprocess and count, then `endogenous` merges their counts with `--input_counts` and calls sites (see conf/test_golden.config).",
                     "enum": [
                         "endogenous_20250418",
                         "endogenous_20251022",
+                        "endogenous",
                         "mpra_invitro",
                         "mpra_incell"
                     ],

@@ -99,6 +99,46 @@ not written as zero. The pipeline log also prints a warning whenever a non-defau
 - `--ont_adapter_mode three_prime_only` with `--orientation_adapters pool`.
 - An antisense adapter that is not the reverse complement of the matching sense adapter (ONT, and pool when used).
 
+## Merging runs that need different preprocessing (D32)
+
+Preprocessing parameters apply to a whole pipeline run. When samples that belong in one analysis
+come from sequencing runs that need **different** preprocessing (for example a legacy library and
+a standard one), process each run separately up to counting, then merge the count tables and call
+sites once:
+
+```bash
+# 1. and 2.: preprocess and count each run (no --analyses)
+nextflow run rmrodell/nanomodamp -profile docker --input run1.csv --library_type endogenous \
+    --fasta tx.fa --bed sites.bed --bed_coordinates one_based_start --ont_adapter_mode three_prime_only --outdir run1
+nextflow run rmrodell/nanomodamp -profile docker --input run2.csv --library_type endogenous \
+    --fasta tx.fa --bed sites.bed --bed_coordinates one_based_start --outdir run2
+# 3.: merge the count tables and call sites (no --input)
+nextflow run rmrodell/nanomodamp -profile docker \
+    --input_counts run1/counts/counts_merged.tsv,run2/counts/counts_merged.tsv \
+    --analyses analyses.yaml --outdir merged
+```
+
+`--input_counts` takes comma-separated `counts_merged.tsv` files or a directory of them. It cannot
+be combined with `--input`. Preprocessing and counting are skipped; the tables are merged by column
+name and written to `counts/counts_merged.tsv`, with `counts/merge_sources.tsv` recording which
+table each sample came from. Metadata columns are the union of the tables (missing values become
+NA, with a warning). The run stops if a `sample_id` appears in more than one table or if the count
+or site columns differ. Use the same reference, BED and `--bed_coordinates` for all runs you merge,
+and keep `rep` values batch-paired across runs (D17); give replicates from different runs distinct
+`rep` values unless they truly come from the same batch.
+
+**Golden example.** The paper's endogenous samples come from run 20250418 (no 5′ ONT adapter,
+`three_prime_only`) and run 20251022 (defaults). `test_golden` runs them as three invocations:
+
+```bash
+nextflow run rmrodell/nanomodamp -profile test_golden,docker --golden_experiment endogenous_20250418 --outdir golden_endogenous_20250418
+nextflow run rmrodell/nanomodamp -profile test_golden,docker --golden_experiment endogenous_20251022 --outdir golden_endogenous_20251022
+nextflow run rmrodell/nanomodamp -profile test_golden,docker --golden_experiment endogenous --outdir golden_endogenous
+```
+
+The third reads `golden_endogenous_*/counts/counts_merged.tsv` relative to the launch directory;
+pass `--input_counts` to point elsewhere.
+
 ## Running the pipeline
 
 ```bash
@@ -109,7 +149,7 @@ nextflow run rmrodell/nanomodamp -profile docker --input ./samplesheet.csv --lib
 
 Test profiles: `test` (small synthetic dataset; until WP1 it is stub data and must be run with
 `-stub`), `test_golden` (paper data subset, `--golden_experiment endogenous_20250418 |
-endogenous_20251022 | mpra_invitro | mpra_incell`) and `test_full` (documented, not run in CI).
+endogenous_20251022 | endogenous | mpra_invitro | mpra_incell`; endogenous needs three runs, see above) and `test_full` (documented, not run in CI).
 
 Note that the pipeline will create the following files in your working directory:
 

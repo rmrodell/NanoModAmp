@@ -39,15 +39,23 @@ jobs:
             args: "--orientation_adapters pool --umi false"
           - name: three-prime-only
             args: "--library_type endogenous --ont_adapter_mode three_prime_only"
+          - name: input-counts
+            # D32: no sample sheet; a real null for input needs a params file
+            args: ""
+            params: |
+              input: null
+              input_counts: tests/data/stub/counts/run_a/counts_merged.tsv,tests/data/stub/counts/run_b/counts_merged.tsv
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: nf-core/setup-nextflow@893c28b667aedeba26e37f296d260ccc5bc4d914 # v3
         with:
           version: ${{ matrix.NXF_VER }}
+      - name: Write params file
+        run: printf '%s\n' "${{ matrix.mode.params || '{}' }}" > params.yml
       - name: Run pipeline in stub mode
-        run: nextflow run ${GITHUB_WORKSPACE} -profile test,docker -stub --outdir ./results ${{ matrix.mode.args }}
-      - name: Show read funnel
-        run: cat results/metrics/read_funnel.tsv
+        run: nextflow run ${GITHUB_WORKSPACE} -profile test,docker -stub -params-file params.yml --outdir ./results ${{ matrix.mode.args }}
+      - name: Show read funnel / merge sources
+        run: cat results/metrics/read_funnel.tsv 2>/dev/null || cat results/counts/merge_sources.tsv
 
   nf-test:
     name: "nf-test | docker"
