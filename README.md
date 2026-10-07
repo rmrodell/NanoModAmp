@@ -49,7 +49,7 @@ HepG2_WT_1_input,fastq/HepG2_WT_1_input.fastq.gz,input,1,HepG2,WT
 nextflow run rmrodell/nanomodamp \
    -profile <docker/singularity/apptainer/conda/institute> \
    --input samplesheet.csv --library_type mpra \
-   --fasta pool.fa --bed sites.bed --bed_coordinates one_based_start \
+   --fasta pool.fa --bed sites.bed \
    --analyses analyses.yaml --outdir <OUTDIR>
 ```
 

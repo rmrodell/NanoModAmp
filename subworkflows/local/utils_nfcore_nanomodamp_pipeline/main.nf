@@ -187,8 +187,8 @@ def validateInputParameters() {
                 errors << "--${p} is required with --input."
             }
         }
-        if (!params.bed_coordinates) {
-            errors << "--bed_coordinates must be set to 'bed0' or 'one_based_start'; its default is decided at gate G1-e (R-15)."
+        if (params.bed) {
+            errors.addAll(checkBed(params.bed, params.bed_coordinates))
         }
     }
     if (revcomp(params.ont_adapter_sense_3p) != params.ont_adapter_antisense_5p.toUpperCase()) {
@@ -226,6 +226,44 @@ def validateInputParameters() {
         log.warn "Non-default preprocessing mode (orientation_adapters=${params.orientation_adapters}, ont_adapter_mode=${params.ont_adapter_mode}, umi=${params.umi}). " +
             "These settings are only for legacy libraries built without ONT adapters, the 5′ ONT adapter, or UMIs; see docs/usage.md."
     }
+}
+
+//
+// BED checks (§3, D11, D19, D27/R-15): >= 6 columns; under bed0 a row with start = end is an error
+// (the legacy single-site style needs --bed_coordinates one_based_start; never auto-detected)
+//
+def checkBed(bed, convention) {
+    def errors = []
+    def f = file(bed)
+    if (!f.exists()) {
+        return errors   // reported by schema validation
+    }
+    def zero_width = []
+    def minus = 0
+    f.eachLine { line, n ->
+        if (!line.trim() || line.startsWith('#') || line.startsWith('track') || line.startsWith('browser')) {
+            return
+        }
+        def c = line.split('\t')
+        if (c.size() < 6) {
+            errors << "--bed ${f.name} line ${n}: needs at least 6 tab-separated columns (chr, start, end, name, score, strand)"
+            return
+        }
+        if (convention == 'bed0' && c[1] == c[2]) {
+            zero_width << "${c[0]}:${c[1]}"
+        }
+        if (c[5] != '+') {
+            minus++
+        }
+    }
+    if (zero_width) {
+        errors << "--bed ${f.name}: ${zero_width.size()} row(s) have start = end (e.g. ${zero_width.take(3).join(', ')}), which is empty in standard BED (--bed_coordinates bed0). " +
+            "If this is a legacy single-site BED with 1-based start = end, rerun with --bed_coordinates one_based_start; otherwise convert it to start = site - 1, end = site (R-15)."
+    }
+    if (minus) {
+        log.warn "--bed ${f.name}: ${minus} region(s) not on the '+' strand; Nano-BID-Amp amplicons are expected on '+' (D19)"
+    }
+    return errors
 }
 
 //

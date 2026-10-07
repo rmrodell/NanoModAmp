@@ -86,12 +86,13 @@
                 },
                 "bed_coordinates": {
                     "type": "string",
-                    "description": "BED coordinate convention.",
-                    "help_text": "`bed0`: standard 0-based, half-open BED. `one_based_start`: the BED start is used as a 1-based position (legacy behaviour). The default is decided at gate G1-e (R-15); until then it must be set explicitly.",
+                    "default": "bed0",
+                    "description": "BED coordinate convention: `bed0` (standard, default) or `one_based_start` (legacy paper BEDs).",
                     "enum": [
                         "bed0",
                         "one_based_start"
-                    ]
+                    ],
+                    "help_text": "D27, R-15 (decided at G1-e). `bed0`: standard 0-based, half-open BED (a single site at 1-based position p is `start = p-1, end = p`). `one_based_start`: the legacy reading used for the paper's BEDs, where start and end are both 1-based and inclusive (a single site is `start = end = p`). Under `bed0`, any row with start = end is an error that points to `one_based_start`; the convention is never auto-detected."
                 }
             }
         },

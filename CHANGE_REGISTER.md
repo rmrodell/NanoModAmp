@@ -20,7 +20,7 @@ Status values: `APPROVED` (implement), `KEEP` (preserve legacy behavior and docu
 | R-12 | Per-region errors swallowed with warnings (`bam_counts_fast.R`) | Fail the task unless `allow_region_failures`; always write `failed_regions.tsv` | APPROVED | None if no failures |
 | R-13 | Coverage `> 20` at counting vs `>= 20` in the sweep wording | Keep `> 20` (D10); document | KEEP | None |
 | R-14 | Cosmetic: step numbering, "umi_tools dedup" label, "cleanup disabled" message, README says MAPQ > 30 | N/A | SUPERSEDED | None |
-| R-15 | BED start used without the 0→1 conversion (commented out) | Determine the paper convention in WP5; expose `bed_coordinates` | OPEN (G1) | Possibly an extra upstream position for single-site BEDs |
+| R-15 | BED start used without the 0→1 conversion (commented out); the paper's single-site BEDs were written as start = end = 1-based site to match | `bed_coordinates` (default `bed0`; `one_based_start` for legacy BEDs). Golden `targets.bed` converted to 0-based. The 20250418 window-BED rows at the window start (e.g. RHBDD2:285) were not intended sites: a known paper artifact, not in the golden package | APPROVED (G1-e, 2026-10-06) | None for the golden targets; legacy BEDs read with `bed0` would shift by one |
 | R-16 | `max_depth=200000` may truncate silently | Keep the default; warn when reached | APPROVED | None unless saturated |
 | R-17 | `all_below_thresh` `na.rm` differs between scripts | Use `na.rm=TRUE` (the in-cellulo version) | APPROVED | None expected (delrate is never NA) |
 | R-18 | Insertions included in `totalReads` | Keep (D9); document | KEEP | None |

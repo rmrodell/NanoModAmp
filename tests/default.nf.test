@@ -104,4 +104,31 @@ nextflow_pipeline {
             assert (workflow.stdout + workflow.stderr).any { line -> line.contains('--input and --input_counts are mutually exclusive') }
         }
     }
+
+    test("-profile test: legacy single-site BED (start = end) is rejected under bed0 (R-15)") {
+        when {
+            params {
+                outdir = "$outputDir"
+                bed    = "${baseDir}/tests/data/stub/targets_one_based.bed"
+            }
+        }
+        then {
+            assert workflow.failed
+            assert (workflow.stdout + workflow.stderr).any { line -> line.contains('--bed_coordinates one_based_start') }
+        }
+    }
+
+    test("-profile test: legacy single-site BED with --bed_coordinates one_based_start (R-15)") {
+        when {
+            params {
+                outdir          = "$outputDir"
+                bed             = "${baseDir}/tests/data/stub/targets_one_based.bed"
+                bed_coordinates = 'one_based_start'
+            }
+        }
+        then {
+            assert workflow.success
+            assert path("${params.outdir}/counts/counts_merged.tsv").exists()
+        }
+    }
 }

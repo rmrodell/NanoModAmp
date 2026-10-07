@@ -38,7 +38,7 @@ contract is in [docs/contracts/samplesheet.md](contracts/samplesheet.md).
 | `--library_type` | `endogenous` (transcript amplicons) or `mpra` (oligo pool). Sets the minimap2 default (`mpra`: `-ax sr`; `endogenous`: `-ax splice -uf`, D5) and enables the MPRA pool-adapter trim. |
 | `--fasta` | Transcript sequences (endogenous) or the oligo pool (MPRA). The `.fai` is built if missing. |
 | `--bed` | Amplicons or single sites, at least 6 columns, `+` strand. |
-| `--bed_coordinates` | `bed0` (standard 0-based BED) or `one_based_start` (the BED start is the 1-based site, as in the paper's single-site BEDs). Required until gate G1-e sets the default (R-15). |
+| `--bed_coordinates` | `bed0` (default): standard 0-based, half-open BED; a single site at 1-based position *p* is `start = p-1, end = p`. `one_based_start`: legacy reading of the paper's BEDs, where start and end are both 1-based and inclusive (single site `start = end = p`). Under `bed0`, a row with start = end stops the run with a message pointing to `one_based_start`; the convention is never guessed (D27, R-15). |
 
 ## Analyses
 
@@ -74,7 +74,7 @@ sets these modes, and only for those samples:
 nextflow run rmrodell/nanomodamp -profile test_golden,docker --golden_experiment mpra_incell --outdir results_incell
 # equivalent explicit parameters for such a legacy library
 nextflow run rmrodell/nanomodamp -profile docker --input samplesheet.csv --library_type mpra \
-    --fasta pool.fa --bed sites.bed --bed_coordinates one_based_start \
+    --fasta pool.fa --bed sites.bed \
     --orientation_adapters pool --umi false --outdir results
 ```
 
@@ -109,9 +109,9 @@ sites once:
 ```bash
 # 1. and 2.: preprocess and count each run (no --analyses)
 nextflow run rmrodell/nanomodamp -profile docker --input run1.csv --library_type endogenous \
-    --fasta tx.fa --bed sites.bed --bed_coordinates one_based_start --ont_adapter_mode three_prime_only --outdir run1
+    --fasta tx.fa --bed sites.bed --ont_adapter_mode three_prime_only --outdir run1
 nextflow run rmrodell/nanomodamp -profile docker --input run2.csv --library_type endogenous \
-    --fasta tx.fa --bed sites.bed --bed_coordinates one_based_start --outdir run2
+    --fasta tx.fa --bed sites.bed --outdir run2
 # 3.: merge the count tables and call sites (no --input)
 nextflow run rmrodell/nanomodamp -profile docker \
     --input_counts run1/counts/counts_merged.tsv,run2/counts/counts_merged.tsv \
@@ -143,7 +143,7 @@ pass `--input_counts` to point elsewhere.
 
 ```bash
 nextflow run rmrodell/nanomodamp -profile docker --input ./samplesheet.csv --library_type mpra \
-    --fasta pool.fa --bed sites.bed --bed_coordinates one_based_start \
+    --fasta pool.fa --bed sites.bed \
     --analyses analyses.yaml --outdir ./results
 ```
 

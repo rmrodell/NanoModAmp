@@ -39,7 +39,27 @@ _To be written (WP6)._
 _To be written (WP6): why `-ax sr` for MPRA and `-ax splice -uf` for endogenous; how presets change deletion representation; how and when to change them._
 
 ## Counting
-_To be written (WP6): the denominator (D9), coverage filtering (D10, R-13 including the `>= 20` sweep wording), the BED convention (R-15)._
+
+### BED coordinates (D27, R-15)
+Target BEDs are read as **standard 0-based, half-open BED** by default (`bed_coordinates=bed0`):
+a single site at 1-based position *p* is written `start = p-1, end = p`, and an amplicon covering
+1-based positions *a..b* is `start = a-1, end = b`.
+
+The paper's own BEDs used a different convention: start and end were both 1-based and inclusive,
+so single sites were written `start = end = p`, and the legacy counter used the start without the
+0→1 conversion (the conversion line was commented out). Its counts are therefore correct for those
+BEDs. To read such legacy BEDs, set `bed_coordinates=one_based_start`.
+
+The convention is never guessed. Under `bed0`, a row with start = end is empty in standard BED,
+so the run stops with a message pointing to `one_based_start`. Reading a legacy BED as `bed0` (or a
+standard BED as `one_based_start`) would shift every site by one position. The golden package's
+`targets.bed` is converted to standard 0-based (start = site − 1, end = site) and uses the default.
+The 20250418 paper table also contains rows at the start of each window BED region (e.g.
+RHBDD2:285) that were not intended sites; they are a documented paper artifact and are not in the
+golden package.
+
+### Counts
+_To be written (WP6): the denominator (D9), coverage filtering (D10, R-13 including the `>= 20` sweep wording)._
 
 ## Site calling
 _To be written (WP6): treatment/TOST and factor models as equations; equivalence limitation at input = 0 (D25); replicate pairing (D17)._

@@ -51,7 +51,7 @@
 | D25 | Equivalence edge case | When mean input delrate = 0, the equivalence bound is infinite. **Keep as written** and document it as a known limitation. |
 | D26 | `sample_name.R` | **Found** at `rmrodell/BIDamplicon/legacy/sample_name.R`. Use the original in the legacy harness only (WP5). The production pipeline uses the sample sheet instead. |
 | D28 | Primer design | A standalone `nma-design` tool for endogenous amplicon and primer design, built as **WP9** in parallel with WP1–WP6. See `primer_plan.md`. |
-| D27 | BED coordinate convention | **Unknown.** WP5 must work it out from the golden data (see R-15) and raise it at Gate G1. |
+| D27 | BED coordinate convention | **Decided at G1-e (2026-10-06):** default `bed_coordinates=bed0` (standard 0-based, half-open). `one_based_start` reproduces the legacy reading (start and end both 1-based, inclusive) for the paper's BEDs. Under `bed0`, a row with start = end is an error pointing to `one_based_start` (no auto-detect). The golden `targets.bed` is converted to standard 0-based (start = site − 1, end = site). See `dev/golden/R15_bed_convention.md`. |
 | D29 | Libraries without ONT adapters or UMIs (2026-10-06) | Two per-run parameters: `orientation_adapters` (default `ont`) and `umi` (default `true`). **The defaults always apply, for endogenous, MPRA in vitro and MPRA in cellulo data alike: ONT trimming, UMI extraction and deduplication.** `orientation_adapters=pool, umi=false` is an opt-in exception that exists only so the golden package can run the paper's in-cellulo samples (run 20241114), which were sequenced from a library built without ONT adapters or UMIs. It is set only in `conf/test_golden.config` for those samples, never by default or by `library_type` (R-26). |
 | D31 | 3′-only ONT adapter libraries (2026-10-06) | Opt-in per-run parameter `ont_adapter_mode` (default `linked`: both ONT adapters required, D4). `three_prime_only` reproduces the legacy trim for libraries whose reads lack the 5′ ONT adapter: one pass `cutadapt -m {trim1_min_length} -O {trim1_min_overlap} -a <S3>`, untrimmed reads kept, no antisense pass or RC. It exists only for the golden endogenous samples from paper run 20250418 and is set only for them in `conf/test_golden.config`; the default applies to all other data (R-29). |
 | D32 | Merging runs at the counts level (2026-10-06) | Runs that need different preprocessing parameters (e.g. golden endogenous 20250418 with `ont_adapter_mode=three_prime_only` and 20251022 with defaults) are preprocessed and counted separately, then merged at the **counts** level for site calling. New parameter `input_counts`: one or more `counts_merged.tsv` files (§5.3) from earlier runs; when set, preprocessing and counting are skipped, the tables are merged by column name (R-06), and calling runs on the merged table. Used by `test_golden` for endogenous. |
@@ -126,7 +126,7 @@ CHANGE_REGISTER.md  PROGRESS.md  CHANGELOG.md  CITATION.cff
 | `library_type` | — | `endogenous` or `mpra`, one per run |
 | `fasta` | — | Transcripts (endogenous) or oligo pool (MPRA). `.fai` is built if missing. |
 | `bed` | — | ≥ 6 columns; amplicons or single sites (D11); strand should be `+` (warn otherwise) |
-| `bed_coordinates` | `TBD at G1` | `bed0` (standard) or `one_based_start` (legacy). See R-15 |
+| `bed_coordinates` | `bed0` | `bed0` (standard, default) or `one_based_start` (legacy reading of the paper's BEDs). Under `bed0`, start = end rows are an error. See R-15, D27 |
 | `ont_adapter_sense_5p` | `TTTCTGTTGGTGCTGATATTGCG` | |
 | `ont_adapter_sense_3p` | `GAAGATAGAGCGACAGGCAAGT` | |
 | `ont_adapter_antisense_5p` | `ACTTGCCTGTCGCTCTATCTTC` | Reverse complement of sense 3′ — validate at startup |
@@ -534,7 +534,7 @@ Status values: `APPROVED` (implement), `KEEP` (preserve legacy behavior and docu
 | R-12 | Per-region errors swallowed with warnings (`bam_counts_fast.R`) | Fail the task unless `allow_region_failures`; always write `failed_regions.tsv` | APPROVED | None if no failures |
 | R-13 | Coverage `> 20` at counting vs `>= 20` in the sweep wording | Keep `> 20` (D10); document | KEEP | None |
 | R-14 | Cosmetic: step numbering, "umi_tools dedup" label, "cleanup disabled" message, README says MAPQ > 30 | N/A | SUPERSEDED | None |
-| R-15 | BED start used without the 0→1 conversion (commented out) | Determine the paper convention in WP5; expose `bed_coordinates` | OPEN (G1) | Possibly an extra upstream position for single-site BEDs |
+| R-15 | BED start used without the 0→1 conversion (commented out); the paper's single-site BEDs were written as start = end = 1-based site to match | `bed_coordinates` (default `bed0`; `one_based_start` for legacy BEDs). Golden `targets.bed` converted to 0-based. The 20250418 window-BED rows at the window start (e.g. RHBDD2:285) were not intended sites: a known paper artifact, not in the golden package | APPROVED (G1-e, 2026-10-06) | None for the golden targets; legacy BEDs read with `bed0` would shift by one |
 | R-16 | `max_depth=200000` may truncate silently | Keep the default; warn when reached | APPROVED | None unless saturated |
 | R-17 | `all_below_thresh` `na.rm` differs between scripts | Use `na.rm=TRUE` (the in-cellulo version) | APPROVED | None expected (delrate is never NA) |
 | R-18 | Insertions included in `totalReads` | Keep (D9); document | KEEP | None |
@@ -568,4 +568,4 @@ Open items to confirm at G1:
 - Whether the endogenous analyses in `analyses_example.yaml` should use `(1|vector)` or `(1|celltype)` random effects, to mirror the Figure 2 design as closely as possible under the Figure 3 method.
 - Whether reads found in both orientations exceed 0.1% of reads.
 
-Resolved at G1 on 2026-10-06 (see `docs/DECISIONS.md`): tool versions (`dev/legacy/versions.txt`), targets, samples, size policy, harness scripts (F1), endogenous reference (F2), dedup seed and V1 rule (G1-c). Still open: R-15 (G1-e) and the endogenous random-effects choice.
+Resolved at G1 on 2026-10-06 (see `docs/DECISIONS.md`): tool versions (`dev/legacy/versions.txt`), targets, samples, size policy, harness scripts (F1), endogenous reference (F2), dedup seed and V1 rule (G1-c). R-15 decided at G1-e the same day. Still open: the endogenous random-effects choice.
