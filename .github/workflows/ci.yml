@@ -26,6 +26,8 @@ jobs:
     # -profile test,docker -stub end to end, in every preprocessing mode (D29, D31)
     name: "stub | docker | ${{ matrix.mode.name }} | NXF ${{ matrix.NXF_VER }}"
     runs-on: ubuntu-latest
+    # latest-everything includes Nextflow edge releases: informative, not blocking (as in nf-core CI)
+    continue-on-error: ${{ matrix.NXF_VER == 'latest-everything' }}
     strategy:
       fail-fast: false
       matrix:

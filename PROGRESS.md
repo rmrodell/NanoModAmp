@@ -24,4 +24,5 @@ Plan: [plan.md](plan.md) · Decisions: [docs/DECISIONS.md](docs/DECISIONS.md) ·
 2. **`bed_coordinates` default** (R-15, G1-e): currently required with no default.
 3. **Golden endogenous across two runs.** Preprocessing parameters are per run, and the golden endogenous samples need different trimming per run (20250418 `three_prime_only`, 20251022 `linked`), so `test_golden` has separate `endogenous_20250418` and `endogenous_20251022` experiments. Site calling across both runs needs either a counts-level merge step (e.g. `--counts_merged` input for calling only) or per-sample preprocessing parameters in the sample sheet. Decide at G0.
 4. **Containers.** Stub modules use a placeholder `ubuntu:22.04` image; WP2–WP4 pin real containers.
-5. Endogenous random effects in `analyses_example.yaml` (`(1|vector)` vs `(1|celltype)`; plan §10).
+5. **Boolean CLI flags on Nextflow edge.** Nextflow 26.09.2-edge rejects `--umi false` given on the command line ("Value is [string] but should be [boolean]"); 25.04.7 accepts it. CI runs `latest-everything` as non-blocking. If stable releases keep this behaviour, document `-params-file` (or `--umi=false` alternatives) for boolean options.
+6. Endogenous random effects in `analyses_example.yaml` (`(1|vector)` vs `(1|celltype)`; plan §10).
