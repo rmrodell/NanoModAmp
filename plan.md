@@ -232,32 +232,34 @@ chr pos gene totalReads A.count C.count G.count T.count Deletion.count Insertion
 ### 5.4 Analyses config (`assets/schema_analyses.json`)
 ```yaml
 analyses:
-  - name: invitro                 # treatment analysis
+  - name: incellulo                 # treatment analysis
     type: treatment
-    subset: {celltype: [IV]}      # optional; column → allowed values
+    subset: {celltype: [HepG2, 293T]}      # optional; column -> allowed values
     random_effects: ""            # extra terms appended to "delrate ~ treat + (1|rep)"
     sesoi: 0.05
     fdr: 0.05
     plot_all_sites: true
     colors: {modified: "#c154c1", input: "#eee8aa"}
-  - name: WT_mod_Both
-    type: treatment
-    subset: {celltype: [HepG2, 293T], vector: [WT, P102, P4]}
-    random_effects: "(1|vector) + (1|celltype)"
   - name: PUS7_dep_Both_WT_v_KD   # generic factor analysis
     type: factor
     subset: {celltype: [HepG2, 293T], vector: [P101, P102]}
     factor: vector
-    levels: [P101, P102]          # [baseline, experimental]; dd = experimental − baseline
+    levels: [P101, P102]          # [baseline, experimental]; dd = experimental - baseline
     random_effects: "(1|celltype)"
     direction: positive           # positive | both
     sesoi: 0.05
     fdr: 0.05
+  - name: PUS7_dep_Both_WT_v_OE
+    type: factor
+    subset: {celltype: [HepG2, 293T], vector: [P4, P3]}
+    factor: vector
+    levels: [P4, P3]              # P4 = WT (baseline), P3 = OE (experimental)
+    random_effects: "(1|celltype)"
 site_sets:                        # optional
   - name: PUS7_dep_union
     op: union                     # union | intersection | difference
     of: [PUS7_dep_Both_WT_v_KD, PUS7_dep_Both_WT_v_OE]
-    quartiles_by: {analysis: WT_mod_Both, column: delta_delrate}   # optional
+    quartiles_by: {analysis: incellulo, column: delta_delrate}   # optional
 ```
 `assets/analyses_example.yaml` must contain the full set of analyses that reproduces the paper's Figure 3 in-cellulo, Figure 3 in-vitro and Figure 2 results (built in WP4/WP5).
 

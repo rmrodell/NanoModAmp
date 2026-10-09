@@ -377,6 +377,10 @@ def loadAnalysesConfig(analyses) {
         if (missing) {
             errors << "site set '${ss.name}': unknown analyses ${missing}"
         }
+        def qa = ss.quartiles_by instanceof Map ? ss.quartiles_by.analysis : null
+        if (qa && !(qa in names)) {
+            errors << "site set '${ss.name}': quartiles_by.analysis '${qa}' is not a defined analysis"
+        }
     }
     if (errors) {
         error("--analyses ${analyses}:\n  - " + errors.join("\n  - "))
