@@ -1,0 +1,68 @@
+{
+ "both_orientations": {
+  "endo_ont": 0,
+  "mpra_ont": 1,
+  "mpra_pool": 0
+ },
+ "dir_order": [
+  "dir_a",
+  "dir_b"
+ ],
+ "filter_test_kept": [
+  "keep_mapq30",
+  "keep_mapq60"
+ ],
+ "funnel": {
+  "endo_3prime": {
+   "dedup": 3,
+   "mapq_filtered": 3,
+   "primary": 3,
+   "raw": 4,
+   "trim1_3prime": 3,
+   "umi_extracted": 3
+  },
+  "endo_ont": {
+   "antisense_rc": 1,
+   "dedup": 2,
+   "mapq_filtered": 4,
+   "merged": 4,
+   "primary": 4,
+   "raw": 4,
+   "trim1_antisense": 1,
+   "trim1_sense": 3,
+   "umi_extracted": 4
+  },
+  "mpra_ont": {
+   "antisense_rc": 2,
+   "dedup": 5,
+   "mapq_filtered": 8,
+   "merged": 9,
+   "primary": 9,
+   "raw": 11,
+   "trim1_antisense": 2,
+   "trim1_sense": 7,
+   "trim2_pool": 9,
+   "umi_extracted": 9
+  },
+  "mpra_pool": {
+   "antisense_rc": 1,
+   "mapq_filtered": 3,
+   "merged": 3,
+   "primary": 3,
+   "raw": 4,
+   "trim1_antisense": 1,
+   "trim1_sense": 2
+  }
+ },
+ "inserts": {
+  "E1_INS": "TGGGACTTCGGGGCCTCGGTAGCTTCCGCATTCCGTGTTGACTTCCTGCAGATTCAGATAAGTTTAGAACCAATACCCGGTAAGGCCACAGGGAGGGACAAAACCGACTTATTGTTTGAGACATCGAGAACAATTACACACCACACAGCTATCGGAAGGGTACTCTCGTCAAGCAAGCAGCAGGACCGTTATGGTTCATGCGCTACCCAAGCTAGGGCGA",
+  "O1": "CTCGACTCATGGGGTTTATTCTTCGGTGGCTTACTGTTATAATATTCAGGAGCGAATGACGAACTCGAATGGCGCCGTCTTACAGTCGACCGTTCGAAAGCCTTTTATATTCAATTATGCGCCCTTGGCAACGGGTCATCTTGGCACACA"
+ },
+ "umis": {
+  "u1": "AGTCAAATCC",
+  "u2": "ATCCCTGCGG",
+  "u3": "GAATTTTTAA",
+  "uE1": "TACCTCCCGT",
+  "uE2": "CGGCTTTGTA"
+ }
+}
