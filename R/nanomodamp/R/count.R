@@ -120,7 +120,8 @@ count_sites <- function(bam, fasta, bed, bed_coordinates = "bed0", min_coverage 
   one <- function(i) {
     r <- regions[i]
     tryCatch(c(count_region(r, fasta_handle, bam_handle, count_all_bases, pp, max_depth), list(error = NA_character_)),
-             error = function(e) list(rows = NULL, saturated = integer(0), error = conditionMessage(e)))
+             error = function(e) list(rows = NULL, saturated = integer(0),
+                                      error = trimws(gsub("\\s*\n\\s*", " ", conditionMessage(e)))))
   }
   idx <- seq_len(nrow(regions))
   if (threads > 1 && length(idx) > 1) {

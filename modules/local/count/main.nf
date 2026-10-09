@@ -1,10 +1,10 @@
 // COUNT: bin/nma_count.R; nanomodamp::count_sites() (§6.2, §5.3).
-// WP0 stub: the real command is implemented in WP3; the stub block lets `-stub` runs test the wiring.
+// Counting options come from params through ext.args (conf/modules.config).
 process COUNT {
     tag "$meta.id"
     label 'process_single'
 
-    container 'docker.io/library/ubuntu:22.04' // placeholder, pinned in WP3
+    container 'docker.io/library/ubuntu:22.04' // TODO(WP3): nanomodamp-r image from containers/nanomodamp-r (not yet built/pushed)
 
     input:
     tuple val(meta), path(bam), path(bai)
@@ -20,10 +20,16 @@ process COUNT {
     task.ext.when == null || task.ext.when
 
     script:
+    def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
     """
-    echo "COUNT is not implemented yet (WP3); use -stub" >&2
-    exit 1
+    nma_count.R \\
+        --bam ${bam} \\
+        --fasta ${fasta} \\
+        --bed ${bed} \\
+        --prefix ${prefix} \\
+        --threads ${task.cpus} \\
+        ${args}
     """
 
     stub:

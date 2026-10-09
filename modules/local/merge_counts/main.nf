@@ -1,9 +1,9 @@
 // MERGE_COUNTS: bin/nma_merge.R; sample_id + sample-sheet metadata + count columns, joined by name (§5.3, R-06).
-// WP0 stub: the real command is implemented in WP3; the stub block lets `-stub` runs test the wiring.
+
 process MERGE_COUNTS {
     label 'process_single'
 
-    container 'docker.io/library/ubuntu:22.04' // placeholder, pinned in WP3
+    container 'docker.io/library/ubuntu:22.04' // TODO(WP3): nanomodamp-r image from containers/nanomodamp-r (not yet built/pushed)
 
     input:
     path counts
@@ -17,8 +17,7 @@ process MERGE_COUNTS {
 
     script:
     """
-    echo "MERGE_COUNTS is not implemented yet (WP3); use -stub" >&2
-    exit 1
+    nma_merge.R --samplesheet ${samplesheet} --counts ${counts} --out counts_merged.tsv
     """
 
     stub:

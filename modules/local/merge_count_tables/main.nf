@@ -2,11 +2,11 @@
 // name (R-06): metadata columns are the union in first-seen order (missing -> NA, with a warning);
 // duplicate sample_id or differing count/site columns fail. Writes counts_merged.tsv (§5.3 layout)
 // and merge_sources.tsv (sample_id -> source table).
-// WP0 stub: the real command is implemented in WP3 (bin/nma_merge.R); the stub block lets `-stub` runs test the wiring.
+// bin/nma_merge.R --tables (nanomodamp::merge_count_tables()).
 process MERGE_COUNT_TABLES {
     label 'process_single'
 
-    container 'docker.io/library/ubuntu:22.04' // placeholder, pinned in WP3
+    container 'docker.io/library/ubuntu:22.04' // TODO(WP3): nanomodamp-r image from containers/nanomodamp-r (not yet built/pushed)
 
     input:
     path tables, stageAs: 'tables/??/*'
@@ -21,8 +21,8 @@ process MERGE_COUNT_TABLES {
 
     script:
     """
-    echo "MERGE_COUNT_TABLES is not implemented yet (WP3); use -stub" >&2
-    exit 1
+    nma_merge.R --tables ${tables.join(' ')} --sources ${sources.collect { "'${it}'" }.join(' ')} \\
+        --out counts_merged.tsv --sources-out merge_sources.tsv
     """
 
     stub:
