@@ -2,12 +2,18 @@
 results/
 logs/
 
-# Data files (except for small test data)
-data/*
-!data/test_data/
-
+# Local data (tests/data/ is committed)
+/data/
 # Environment and temporary files
 *.Rproj.user
 .Rhistory
 __pycache__/
 *venv/
+.nextflow*
+work/
+.DS_Store
+testing/
+testing*
+*.pyc
+null/
+.lineage/

@@ -1,0 +1,134 @@
+nextflow_pipeline {
+
+    name "Test pipeline (WP0 stub wiring)"
+    script "../main.nf"
+    tag "pipeline"
+    options "-stub"
+
+    test("-profile test: defaults (ont, linked, umi), mpra") {
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+        }
+        then {
+            def steps = path("${params.outdir}/metrics/read_funnel.tsv").readLines().drop(1)
+                .collect { line -> line.split('\t') }.findAll { f -> f[0] == 'S1_BS' }.collect { f -> f[1] }
+            assert workflow.success
+            assert steps == ['raw', 'trim1_sense', 'trim1_antisense', 'antisense_rc', 'merged',
+                             'umi_extracted', 'trim2_pool', 'mapped', 'primary', 'mapq_filtered', 'dedup']
+            assert path("${params.outdir}/bam/S2_input.bam").exists()
+            assert path("${params.outdir}/counts/counts_merged.tsv").exists()
+            assert path("${params.outdir}/calling/stub_treatment").exists()
+            assert path("${params.outdir}/calling/stub_factor").exists()
+            assert path("${params.outdir}/site_sets").exists()
+        }
+    }
+
+    test("-profile test: legacy library without ONT adapters or UMIs (D29)") {
+        when {
+            params {
+                outdir               = "$outputDir"
+                orientation_adapters = 'pool'
+                umi                  = false
+            }
+        }
+        then {
+            def steps = path("${params.outdir}/metrics/read_funnel.tsv").readLines().drop(1)
+                .collect { line -> line.split('\t') }.findAll { f -> f[0] == 'S1_BS' }.collect { f -> f[1] }
+            assert workflow.success
+            assert steps == ['raw', 'trim1_sense', 'trim1_antisense', 'antisense_rc', 'merged',
+                             'mapped', 'primary', 'mapq_filtered']
+            assert path("${params.outdir}/bam/S1_BS.bam").exists()
+        }
+    }
+
+    test("-profile test: legacy library without the 5' ONT adapter (D31), endogenous") {
+        when {
+            params {
+                outdir           = "$outputDir"
+                library_type     = 'endogenous'
+                ont_adapter_mode = 'three_prime_only'
+            }
+        }
+        then {
+            def steps = path("${params.outdir}/metrics/read_funnel.tsv").readLines().drop(1)
+                .collect { line -> line.split('\t') }.findAll { f -> f[0] == 'S1_BS' }.collect { f -> f[1] }
+            assert workflow.success
+            assert steps == ['raw', 'trim1_3prime', 'umi_extracted', 'mapped', 'primary', 'mapq_filtered', 'dedup']
+        }
+    }
+
+    test("-profile test: pool orientation with UMIs is rejected (D29)") {
+        when {
+            params {
+                outdir               = "$outputDir"
+                orientation_adapters = 'pool'
+            }
+        }
+        then {
+            assert workflow.failed
+            assert (workflow.stdout + workflow.stderr).any { line -> line.contains('--orientation_adapters pool cannot be combined with --umi true') }
+        }
+    }
+
+    test("-profile test: --input_counts merges count tables and calls sites (D32)") {
+        when {
+            params {
+                outdir       = "$outputDir"
+                input        = null
+                input_counts = "${baseDir}/tests/data/stub/counts/run_a/counts_merged.tsv,${baseDir}/tests/data/stub/counts/run_b/counts_merged.tsv"
+            }
+        }
+        then {
+            def sources = path("${params.outdir}/counts/merge_sources.tsv").readLines().drop(1)
+                .collect { line -> line.split('\t')[0] }
+            assert workflow.success
+            assert sources == ['S1_BS', 'S1_input', 'S2_BS', 'S2_input']
+            assert path("${params.outdir}/counts/counts_merged.tsv").readLines().size() == 5
+            assert path("${params.outdir}/calling/stub_treatment").exists()
+            assert !path("${params.outdir}/metrics").exists()
+            assert !path("${params.outdir}/bam").exists()
+        }
+    }
+
+    test("-profile test: --input and --input_counts together are rejected (D32)") {
+        when {
+            params {
+                outdir       = "$outputDir"
+                input_counts = "${baseDir}/tests/data/stub/counts/run_a/counts_merged.tsv"
+            }
+        }
+        then {
+            assert workflow.failed
+            assert (workflow.stdout + workflow.stderr).any { line -> line.contains('--input and --input_counts are mutually exclusive') }
+        }
+    }
+
+    test("-profile test: legacy single-site BED (start = end) is rejected under bed0 (R-15)") {
+        when {
+            params {
+                outdir = "$outputDir"
+                bed    = "${baseDir}/tests/data/stub/targets_one_based.bed"
+            }
+        }
+        then {
+            assert workflow.failed
+            assert (workflow.stdout + workflow.stderr).any { line -> line.contains('--bed_coordinates one_based_start') }
+        }
+    }
+
+    test("-profile test: legacy single-site BED with --bed_coordinates one_based_start (R-15)") {
+        when {
+            params {
+                outdir          = "$outputDir"
+                bed             = "${baseDir}/tests/data/stub/targets_one_based.bed"
+                bed_coordinates = 'one_based_start'
+            }
+        }
+        then {
+            assert workflow.success
+            assert path("${params.outdir}/counts/counts_merged.tsv").exists()
+        }
+    }
+}

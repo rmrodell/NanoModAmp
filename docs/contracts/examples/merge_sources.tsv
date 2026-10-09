@@ -1,0 +1,3 @@
+sample_id	source_table
+HepG2_WT_1_BS	golden_endogenous_20250418/counts/counts_merged.tsv
+HepG2_KD_1_BS	golden_endogenous_20251022/counts/counts_merged.tsv

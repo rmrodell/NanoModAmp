@@ -1,0 +1,538 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/rmrodell/NanoModAmp/main/nextflow_schema.json",
+    "title": "rmrodell/nanomodamp pipeline parameters",
+    "description": "Nano-BID-Amp pseudouridine site calling from demultiplexed Nanopore amplicon FASTQ",
+    "type": "object",
+    "$defs": {
+        "input_output_options": {
+            "title": "Input/output options",
+            "type": "object",
+            "fa_icon": "fas fa-terminal",
+            "description": "Define where the pipeline should find input data and save output data.",
+            "required": [
+                "outdir"
+            ],
+            "properties": {
+                "input": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "schema": "assets/schema_input.json",
+                    "mimetype": "text/csv",
+                    "pattern": "^\\S+\\.csv$",
+                    "description": "Path to the sample sheet (CSV) describing the samples of one run. Use either --input or --input_counts.",
+                    "help_text": "Comma-separated sample sheet with a header row. Required columns: `sample_id`, `fastq` (a `.fastq.gz` file or a directory whose `*.fastq.gz` files are concatenated in lexical order), `treat` (`input` or `BS`) and `rep` (batch-paired replicate). Any other column is carried as metadata. Relative `fastq` paths are resolved against the sample sheet's directory. See docs/usage.md and docs/contracts/samplesheet.md.",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "input_counts": {
+                    "type": "string",
+                    "description": "Comma-separated `counts_merged.tsv` files from earlier runs, or a directory of them. Skips preprocessing and counting; the tables are merged and site calling runs on the result. Use either --input or --input_counts.",
+                    "help_text": "D32. For runs that need different preprocessing parameters (for example a legacy library and a standard one): run each with --input and no --analyses, then merge their counts/counts_merged.tsv with --input_counts and --analyses. Tables are merged by column name (R-06); metadata columns are the union (missing values become NA, with a warning). Duplicate sample_id across tables or differing count/site columns stop the run. Output: counts/counts_merged.tsv and counts/merge_sources.tsv.",
+                    "pattern": "^\\S+$",
+                    "fa_icon": "fas fa-table"
+                },
+                "outdir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
+                    "fa_icon": "fas fa-folder-open"
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Email address for completion summary.",
+                    "fa_icon": "fas fa-envelope",
+                    "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
+                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
+                },
+                "multiqc_title": {
+                    "type": "string",
+                    "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
+                    "fa_icon": "fas fa-file-signature"
+                }
+            }
+        },
+        "reference_options": {
+            "title": "Library and reference options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Library type, reference sequences and target regions. Required with --input (not used with --input_counts).",
+            "required": [],
+            "properties": {
+                "library_type": {
+                    "type": "string",
+                    "description": "Library type of this run.",
+                    "help_text": "`endogenous` (transcript amplicons) or `mpra` (oligo pool). Sets the minimap2 default (D5) and enables the MPRA pool-adapter trim. One library type per run.",
+                    "enum": [
+                        "endogenous",
+                        "mpra"
+                    ]
+                },
+                "fasta": {
+                    "type": "string",
+                    "description": "Reference FASTA: transcript sequences (endogenous) or the oligo pool (MPRA).",
+                    "help_text": "The `.fai` index is built if missing.",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.(fa|fasta|fna)(\\.gz)?$"
+                },
+                "bed": {
+                    "type": "string",
+                    "description": "BED file of amplicons or single sites (≥ 6 columns).",
+                    "help_text": "Whole amplicons or single sites (D11). Strand should be `+` (D19); other strands give a warning.",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.bed$"
+                },
+                "bed_coordinates": {
+                    "type": "string",
+                    "default": "bed0",
+                    "description": "BED coordinate convention: `bed0` (standard, default) or `one_based_start` (legacy paper BEDs).",
+                    "enum": [
+                        "bed0",
+                        "one_based_start"
+                    ],
+                    "help_text": "D27, R-15 (decided at G1-e). `bed0`: standard 0-based, half-open BED (a single site at 1-based position p is `start = p-1, end = p`). `one_based_start`: the legacy reading used for the paper's BEDs, where start and end are both 1-based and inclusive (a single site is `start = end = p`). Under `bed0`, any row with start = end is an error that points to `one_based_start`; the convention is never auto-detected."
+                }
+            }
+        },
+        "adapter_options": {
+            "title": "Orientation and adapter trimming",
+            "type": "object",
+            "fa_icon": "fas fa-cut",
+            "description": "Adapter sequences and cutadapt settings (plan §6.1; D4, D29, D31).",
+            "properties": {
+                "orientation_adapters": {
+                    "type": "string",
+                    "default": "ont",
+                    "description": "Adapters used to orient reads. Keep the default `ont` for all libraries built with ONT adapters, including MPRA in cellulo.",
+                    "help_text": "D29. `ont` (default, for all endogenous, MPRA in vitro and MPRA in cellulo data): sense/antisense passes use the ONT adapters, followed by the MPRA pool trim for `library_type=mpra`. `pool` is an opt-in exception for legacy libraries built without ONT adapters (the paper's in-cellulo run 20241114, used by `test_golden`): the passes use the MPRA pool adapters with the `trim1_*` settings and the separate pool trim is skipped. `pool` requires `library_type=mpra` and `umi=false`. Never set from `library_type`.",
+                    "enum": [
+                        "ont",
+                        "pool"
+                    ]
+                },
+                "ont_adapter_mode": {
+                    "type": "string",
+                    "default": "linked",
+                    "description": "How the ONT adapters are trimmed. Keep the default `linked` for all libraries built with both ONT adapters.",
+                    "enum": [
+                        "linked",
+                        "three_prime_only"
+                    ],
+                    "help_text": "D31. `linked` (default, all data): sense and antisense passes each require both ONT adapters (D4). `three_prime_only` is an opt-in exception for legacy libraries whose reads lack the 5′ ONT adapter (the paper's endogenous run 20250418, used by `test_golden`): a single `cutadapt -m {trim1_min_length} -O {trim1_min_overlap} -a <ont_adapter_sense_3p>` pass that keeps untrimmed reads, with no antisense pass or reverse complement; the read funnel records `trim1_3prime`. Valid only with `orientation_adapters=ont`. Never set from `library_type`."
+                },
+                "ont_adapter_sense_5p": {
+                    "type": "string",
+                    "default": "TTTCTGTTGGTGCTGATATTGCG",
+                    "description": "ONT sense 5′ adapter.",
+                    "pattern": "^[ACGTacgt]+$"
+                },
+                "ont_adapter_sense_3p": {
+                    "type": "string",
+                    "default": "GAAGATAGAGCGACAGGCAAGT",
+                    "description": "ONT sense 3′ adapter.",
+                    "pattern": "^[ACGTacgt]+$"
+                },
+                "ont_adapter_antisense_5p": {
+                    "type": "string",
+                    "default": "ACTTGCCTGTCGCTCTATCTTC",
+                    "description": "ONT antisense 5′ adapter; must be the reverse complement of the sense 3′ adapter (checked at startup).",
+                    "pattern": "^[ACGTacgt]+$"
+                },
+                "ont_adapter_antisense_3p": {
+                    "type": "string",
+                    "default": "CGCAATATCAGCACCAACAGAAA",
+                    "description": "ONT antisense 3′ adapter; must be the reverse complement of the sense 5′ adapter (checked at startup).",
+                    "pattern": "^[ACGTacgt]+$"
+                },
+                "trim1_min_length": {
+                    "type": "integer",
+                    "default": 125,
+                    "description": "cutadapt `-m` for the orientation passes.",
+                    "minimum": 1
+                },
+                "trim1_min_overlap": {
+                    "type": "integer",
+                    "default": 15,
+                    "description": "cutadapt `-O` for the orientation passes.",
+                    "minimum": 1
+                },
+                "pool_adapter_5p": {
+                    "type": "string",
+                    "default": "GACGCTCTTCCGATCT",
+                    "description": "MPRA pool 5′ adapter (MPRA only).",
+                    "pattern": "^[ACGTacgt]+$"
+                },
+                "pool_adapter_3p": {
+                    "type": "string",
+                    "default": "CACTCGGGCACCAAGGAC",
+                    "description": "MPRA pool 3′ adapter (MPRA only).",
+                    "pattern": "^[ACGTacgt]+$"
+                },
+                "pool_adapter_antisense_5p": {
+                    "type": "string",
+                    "default": "GTCCTTGGTGCCCGAGTG",
+                    "description": "Pool antisense 5′ adapter, used only with `orientation_adapters=pool`; reverse complement of `pool_adapter_3p` (checked at startup).",
+                    "pattern": "^[ACGTacgt]+$"
+                },
+                "pool_adapter_antisense_3p": {
+                    "type": "string",
+                    "default": "AGATCGGAAGAGCGTC",
+                    "description": "Pool antisense 3′ adapter, used only with `orientation_adapters=pool`; reverse complement of `pool_adapter_5p` (checked at startup).",
+                    "pattern": "^[ACGTacgt]+$"
+                },
+                "trim2_min_length": {
+                    "type": "integer",
+                    "default": 120,
+                    "description": "cutadapt `-m` for the MPRA pool trim (MPRA only).",
+                    "minimum": 1
+                },
+                "trim2_min_overlap": {
+                    "type": "integer",
+                    "default": 10,
+                    "description": "cutadapt `-O` for the MPRA pool trim (MPRA only).",
+                    "minimum": 1
+                },
+                "require_both_adapters": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Keep only reads with both linked adapters (D4).",
+                    "help_text": "`false` reproduces the legacy non-anchored behaviour (R-04) and is for diagnostics only."
+                }
+            }
+        },
+        "umi_options": {
+            "title": "UMI and deduplication",
+            "type": "object",
+            "fa_icon": "fas fa-fingerprint",
+            "description": "UMI extraction and UMICollapse deduplication (D7, D29).",
+            "properties": {
+                "umi": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Extract UMIs and deduplicate. Keep the default `true` for all libraries with UMIs, including MPRA in cellulo.",
+                    "help_text": "D29. `false` is an opt-in exception for legacy libraries built without UMIs (the paper's in-cellulo run 20241114, used by `test_golden`): UMI extraction and UMICollapse are skipped and the filtered BAM is the final BAM; the read funnel omits `umi_extracted` and `dedup`. Never set from `library_type`."
+                },
+                "umi_pattern": {
+                    "type": "string",
+                    "default": "NNNNNNNNNN",
+                    "description": "umi_tools `--bc-pattern` (string method, 3′ end). Ignored when `umi=false`.",
+                    "pattern": "^N+$"
+                },
+                "umicollapse_args": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Extra UMICollapse arguments (defaults, D7)."
+                }
+            }
+        },
+        "mapping_options": {
+            "title": "Mapping and alignment filters",
+            "type": "object",
+            "fa_icon": "fas fa-map",
+            "description": "minimap2 and samtools filtering (D5).",
+            "properties": {
+                "minimap2_args": {
+                    "type": "string",
+                    "description": "minimap2 arguments. Empty = by library type: `mpra` → `-ax sr`, `endogenous` → `-ax splice -uf`.",
+                    "help_text": "D5: these are the presets validated in the paper; presets change how deletions are represented. See docs/methods.md before changing them."
+                },
+                "min_mapq": {
+                    "type": "integer",
+                    "default": 30,
+                    "description": "Keep alignments with MAPQ ≥ this value (`samtools view -q`).",
+                    "minimum": 0
+                },
+                "sam_exclude_flags": {
+                    "type": "integer",
+                    "default": 2304,
+                    "description": "`samtools view -F` flags (2304 = secondary + supplementary).",
+                    "minimum": 0
+                }
+            }
+        },
+        "counting_options": {
+            "title": "Counting",
+            "type": "object",
+            "fa_icon": "fas fa-calculator",
+            "description": "Per-site pileup counting (plan §6.2; D9, D10, D12).",
+            "properties": {
+                "min_coverage": {
+                    "type": "integer",
+                    "default": 20,
+                    "description": "Keep sites with `totalReads > min_coverage` (strict; D10, R-13).",
+                    "minimum": 0
+                },
+                "pileup_max_depth": {
+                    "type": "integer",
+                    "default": 200000,
+                    "description": "Rsamtools pileup `max_depth`; a warning is issued when reached (R-16).",
+                    "minimum": 1
+                },
+                "pileup_min_mapq": {
+                    "type": "integer",
+                    "default": 1,
+                    "description": "Rsamtools pileup `min_mapq` (as in the paper).",
+                    "minimum": 0
+                },
+                "pileup_min_base_quality": {
+                    "type": "integer",
+                    "default": 1,
+                    "description": "Rsamtools pileup `min_base_quality` (as in the paper).",
+                    "minimum": 0
+                },
+                "count_all_bases": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "QC mode: report all reference bases and the background-deletion report (D12). Site calling still uses T only."
+                },
+                "kmer_size": {
+                    "type": "integer",
+                    "default": 5,
+                    "description": "Centered k-mer length reported per site; NA near sequence ends.",
+                    "minimum": 1
+                },
+                "allow_region_failures": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If false, any per-region counting error fails the task (R-12). Failed regions are always written to `failed_regions.tsv`."
+                }
+            }
+        },
+        "analysis_options": {
+            "title": "Site calling",
+            "type": "object",
+            "fa_icon": "fas fa-chart-bar",
+            "description": "Treatment and factor analyses (plan §5.4, §6.3–6.5).",
+            "properties": {
+                "analyses": {
+                    "type": "string",
+                    "description": "YAML file of analyses and site sets. If absent, the pipeline stops after counting.",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.ya?ml$",
+                    "help_text": "Format: assets/schema_analyses.json and docs/contracts/analyses.md. Checked at startup (names, types, factor levels, site-set references); full validation is part of site calling."
+                },
+                "plot_all_sites": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Write the all-sites plot for every analysis (per-analysis override allowed)."
+                }
+            }
+        },
+        "golden_options": {
+            "title": "Golden test package",
+            "type": "object",
+            "fa_icon": "fas fa-vial",
+            "description": "Used only by the `test_golden` profile.",
+            "properties": {
+                "golden_experiment": {
+                    "type": "string",
+                    "description": "Golden experiment to run with `-profile test_golden`.",
+                    "help_text": "One golden run per paper sequencing run. The only places the pipeline sets non-default preprocessing modes: `endogenous_20250418` uses `ont_adapter_mode=three_prime_only` (D31) and `mpra_incell` (run 20241114) uses `orientation_adapters=pool, umi=false` (D29), because those libraries were built without the 5′ ONT adapter or without ONT adapters and UMIs. Endogenous takes three runs (D32): `endogenous_20250418` and `endogenous_20251022` preprocess and count, then `endogenous` merges their counts with `--input_counts` and calls sites (see conf/test_golden.config).",
+                    "enum": [
+                        "endogenous_20250418",
+                        "endogenous_20251022",
+                        "endogenous",
+                        "mpra_invitro",
+                        "mpra_incell"
+                    ],
+                    "hidden": true
+                }
+            }
+        },
+        "institutional_config_options": {
+            "title": "Institutional config options",
+            "type": "object",
+            "fa_icon": "fas fa-university",
+            "description": "Parameters used to describe centralised config profiles. These should not be edited.",
+            "help_text": "The centralised nf-core configuration profiles use a handful of pipeline parameters to describe themselves. This information is then printed to the Nextflow log when you run a pipeline. You should not need to change these values when you run a pipeline.",
+            "properties": {
+                "custom_config_version": {
+                    "type": "string",
+                    "description": "Git commit id for Institutional configs.",
+                    "default": "master",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "custom_config_base": {
+                    "type": "string",
+                    "description": "Base directory for Institutional configs.",
+                    "default": "https://raw.githubusercontent.com/nf-core/configs/master",
+                    "hidden": true,
+                    "help_text": "If you're running offline, Nextflow will not be able to fetch the institutional config files from the internet. If you don't need them, then this is not a problem. If you do need them, you should download the files from the repo and tell Nextflow where to find them with this parameter.",
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "config_profile_name": {
+                    "type": "string",
+                    "description": "Institutional config name.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "config_profile_description": {
+                    "type": "string",
+                    "description": "Institutional config description.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "config_profile_contact": {
+                    "type": "string",
+                    "description": "Institutional config contact information.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "config_profile_url": {
+                    "type": "string",
+                    "description": "Institutional config URL link.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                }
+            }
+        },
+        "generic_options": {
+            "title": "Generic options",
+            "type": "object",
+            "fa_icon": "fas fa-file-import",
+            "description": "Less common options for the pipeline, typically set in a config file.",
+            "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
+            "properties": {
+                "version": {
+                    "type": "boolean",
+                    "description": "Display version and exit.",
+                    "fa_icon": "fas fa-question-circle",
+                    "hidden": true
+                },
+                "publish_dir_mode": {
+                    "type": "string",
+                    "default": "copy",
+                    "description": "Method used to save pipeline results to output directory.",
+                    "help_text": "The Nextflow `publishDir` option specifies which intermediate files should be saved to the output directory. This option tells the pipeline what method should be used to move these files. See [Nextflow docs](https://www.nextflow.io/docs/latest/process.html#publishdir) for details.",
+                    "fa_icon": "fas fa-copy",
+                    "enum": [
+                        "symlink",
+                        "rellink",
+                        "link",
+                        "copy",
+                        "copyNoFollow",
+                        "move"
+                    ],
+                    "hidden": true
+                },
+                "email_on_fail": {
+                    "type": "string",
+                    "description": "Email address for completion summary, only when pipeline fails.",
+                    "fa_icon": "fas fa-exclamation-triangle",
+                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
+                    "help_text": "An email address to send a summary email to when the pipeline is completed - ONLY sent if the pipeline does not exit successfully.",
+                    "hidden": true
+                },
+                "plaintext_email": {
+                    "type": "boolean",
+                    "description": "Send plain-text email instead of HTML.",
+                    "fa_icon": "fas fa-remove-format",
+                    "hidden": true
+                },
+                "max_multiqc_email_size": {
+                    "type": "string",
+                    "description": "File size limit when attaching MultiQC reports to summary emails.",
+                    "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$",
+                    "default": "25.MB",
+                    "fa_icon": "fas fa-file-upload",
+                    "hidden": true
+                },
+                "monochrome_logs": {
+                    "type": "boolean",
+                    "description": "Do not use coloured log outputs.",
+                    "fa_icon": "fas fa-palette",
+                    "hidden": true
+                },
+                "multiqc_config": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Custom config file to supply to MultiQC.",
+                    "fa_icon": "fas fa-cog",
+                    "hidden": true
+                },
+                "multiqc_logo": {
+                    "type": "string",
+                    "description": "Custom logo file to supply to MultiQC. File name must also be set in the MultiQC config file",
+                    "fa_icon": "fas fa-image",
+                    "hidden": true
+                },
+                "multiqc_methods_description": {
+                    "type": "string",
+                    "description": "Custom MultiQC yaml file containing HTML including a methods description.",
+                    "fa_icon": "fas fa-cog"
+                },
+                "validate_params": {
+                    "type": "boolean",
+                    "description": "Boolean whether to validate parameters against the schema at runtime",
+                    "default": true,
+                    "fa_icon": "fas fa-check-square",
+                    "hidden": true
+                },
+                "pipelines_testdata_base_path": {
+                    "type": "string",
+                    "fa_icon": "far fa-check-circle",
+                    "description": "Base URL or local path to location of pipeline test dataset files",
+                    "default": "https://raw.githubusercontent.com/nf-core/test-datasets/",
+                    "hidden": true
+                },
+                "trace_report_suffix": {
+                    "type": "string",
+                    "fa_icon": "far calendar",
+                    "description": "Suffix to add to the trace report filename. Default is the date and time in the format yyyy-MM-dd_HH-mm-ss.",
+                    "hidden": true
+                },
+                "help": {
+                    "type": [
+                        "boolean",
+                        "string"
+                    ],
+                    "description": "Display the help message."
+                },
+                "help_full": {
+                    "type": "boolean",
+                    "description": "Display the full detailed help message."
+                },
+                "show_hidden": {
+                    "type": "boolean",
+                    "description": "Display hidden parameters in the help message (only works when --help or --help_full are provided)."
+                }
+            }
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "#/$defs/input_output_options"
+        },
+        {
+            "$ref": "#/$defs/reference_options"
+        },
+        {
+            "$ref": "#/$defs/adapter_options"
+        },
+        {
+            "$ref": "#/$defs/umi_options"
+        },
+        {
+            "$ref": "#/$defs/mapping_options"
+        },
+        {
+            "$ref": "#/$defs/counting_options"
+        },
+        {
+            "$ref": "#/$defs/analysis_options"
+        },
+        {
+            "$ref": "#/$defs/golden_options"
+        },
+        {
+            "$ref": "#/$defs/institutional_config_options"
+        },
+        {
+            "$ref": "#/$defs/generic_options"
+        }
+    ]
+}

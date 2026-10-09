@@ -1,0 +1,2 @@
+chr	pos	term	p.value	note	p.value.BH	delta_delrate_P101	delta_delrate_P102	dd_delrate
+HDAC6_chrX_48823353	65	glm_model_factor	2.2e-06		1.1e-05	0.04	0.27	0.23

@@ -1,0 +1,5 @@
+sample_id,fastq,treat,rep,celltype,vector
+S1_BS,fastq/S1_BS.fastq.gz,BS,1,IV,PUS7
+S2_BS,fastq/S2_BS.fastq.gz,BS,2,IV,PUS7
+S1_input,fastq/S1_input.fastq.gz,input,1,IV,noPUS
+S2_input,fastq/S3_input_dir,input,2,IV,noPUS

@@ -1,0 +1,3 @@
+chr	pos	category	avg_delrate_BS	avg_delrate_input	delta_delrate	p.adjust_diff	equivalence_status	site_specific_eqbound	p.value	is_equivalent	model_status
+STIM1_chr11_4092507	65	Modified	0.41	0.02	0.39	1.2e-08	Different (Positive)	1.03	3.1e-10	FALSE	ok
+GOSR1_chr17_30492728	65	Unmodified	0.012	0.010	0.002	0.81	Equivalent by TOST	1.66	0.64	TRUE	ok
