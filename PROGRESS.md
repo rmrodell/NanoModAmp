@@ -34,4 +34,5 @@ Plan: [plan.md](plan.md) · Decisions: [docs/DECISIONS.md](docs/DECISIONS.md) ·
 - **Test 12** (`-profile test` end to end, both library types, real tools): needs WP3 counting and WP1 data; stub runs of `-profile test -stub` pass in all three modes.
 - **Test 9 (missing file)** is enforced by the sample-sheet schema at pipeline level (WP0 test); CAT_FASTQ also fails clearly on empty files and on directories without `*.fastq.gz`.
 - **Observation for WP7 (R-04):** on the fixtures, reads carrying only one ONT adapter are discarded both by cutadapt 5.2 with `;required` and by legacy cutadapt 1.18 linked `-g` with `--discard-untrimmed`; the R-04 difference will have to be measured on real data (golden package).
+- **Lint:** `nextflow lint` passes on all new files; `nf-core pipelines lint` did not finish locally (stalled after generating container configs, 15 min timeout) — CI runs it.
 - **Fixture observation:** the chimera fixture (sense + antisense construct in one read) puts 1 of 9 merged reads in both orientations, so MERGE_ORIENT logs the > 0.1% warning there by design.
