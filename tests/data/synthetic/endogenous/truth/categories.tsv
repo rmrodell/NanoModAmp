@@ -1,0 +1,17 @@
+analysis	chr	pos	site_type	expected	clear_cut
+WT_mod	AMP1	60	PUS7DEP	Modified	1
+PUS7_dep_WT_v_KD	AMP1	60	PUS7DEP	significant	1
+WT_mod	AMP1	170	UNMOD	Unmodified	1
+PUS7_dep_WT_v_KD	AMP1	170	UNMOD	not_significant	1
+WT_mod	AMP2	90	INDEP	Modified	1
+PUS7_dep_WT_v_KD	AMP2	90	INDEP	not_significant	1
+WT_mod	AMP3	70	INPUT_ZERO	-	0
+PUS7_dep_WT_v_KD	AMP3	70	INPUT_ZERO	-	0
+WT_mod	AMP3	150	INS	Unmodified	1
+PUS7_dep_WT_v_KD	AMP3	150	INS	not_significant	1
+WT_mod	AMP4	100	LOWCOV	-	0
+PUS7_dep_WT_v_KD	AMP4	100	LOWCOV	-	0
+WT_mod	AMP5	120	UNMOD	Unmodified	1
+PUS7_dep_WT_v_KD	AMP5	120	UNMOD	not_significant	1
+WT_mod	AMP5	200	NOISY	-	0
+PUS7_dep_WT_v_KD	AMP5	200	NOISY	-	0

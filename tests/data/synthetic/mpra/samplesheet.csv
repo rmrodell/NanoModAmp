@@ -1,0 +1,9 @@
+sample_id,fastq,treat,rep,celltype,vector
+SIM_WT_1_input,fastq/SIM_WT_1_input.fastq.gz,input,1,SIM,WT
+SIM_WT_1_BS,fastq/SIM_WT_1_BS.fastq.gz,BS,1,SIM,WT
+SIM_WT_2_input,fastq/SIM_WT_2_input.fastq.gz,input,2,SIM,WT
+SIM_WT_2_BS,fastq/SIM_WT_2_BS.fastq.gz,BS,2,SIM,WT
+SIM_KD_1_input,fastq/SIM_KD_1_input.fastq.gz,input,1,SIM,KD
+SIM_KD_1_BS,fastq/SIM_KD_1_BS.fastq.gz,BS,1,SIM,KD
+SIM_KD_2_input,fastq/SIM_KD_2_input.fastq.gz,input,2,SIM,KD
+SIM_KD_2_BS,fastq/SIM_KD_2_BS.fastq.gz,BS,2,SIM,KD
