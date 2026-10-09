@@ -1,0 +1,64 @@
+// WP2 tests 8, 9, 10: directory inputs concatenate in lexical order; an empty directory gives a
+// clear error; the raw .gz is passed through unchanged (its records are counted by READ_FUNNEL).
+nextflow_process {
+
+    name "Test process CAT_FASTQ"
+    script "../main.nf"
+    process "CAT_FASTQ"
+    tag "modules"
+    tag "cat_fastq"
+
+    def names = { f ->
+        def l = new java.util.zip.GZIPInputStream(new FileInputStream(f.toString())).getText('UTF-8').readLines()
+        (0..<l.size()).step(4).collect { i -> l[i].substring(1).split(' ')[0] }
+    }
+
+    test("test 8: directory of *.fastq.gz is concatenated in lexical order") {
+        when {
+            process {
+                """
+                input[0] = [[id: 'S_dir'], file("${projectDir}/tests/fixtures/preprocess/fastq/S_dir", type: 'dir', checkIfExists: true)]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert names(process.out.reads[0][1]) == ['dir_a', 'dir_b'] }
+            )
+        }
+    }
+
+    test("test 10: a single .fastq.gz passes through unchanged") {
+        when {
+            process {
+                """
+                input[0] = [[id: 'mpra_ont'], file("${projectDir}/tests/fixtures/preprocess/fastq/mpra_ont.fastq.gz", checkIfExists: true)]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert names(process.out.reads[0][1]).size() == 11 },
+                { assert path(process.out.reads[0][1]).md5 == path("${baseDir}/tests/fixtures/preprocess/fastq/mpra_ont.fastq.gz").md5 }
+            )
+        }
+    }
+
+    test("test 9: a directory without *.fastq.gz fails with a clear error") {
+        when {
+            process {
+                """
+                input[0] = [[id: 'empty'], file("${projectDir}/tests/fixtures/preprocess/empty_dir", type: 'dir', checkIfExists: true)]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert process.stderr.any { l -> l.contains("contains no *.fastq.gz files") } }
+            )
+        }
+    }
+}

@@ -19,5 +19,7 @@ the four orientation steps when `ont_adapter_mode=three_prime_only`.
 
 `preprocess/<sample>/<sample>.both_orientations.tsv` records `n_reads_in_both_orientations`
 (read IDs found in both the sense and antisense outputs; not produced in `three_prime_only` mode).
+`preprocess/<sample>/<sample>.merge_orient.log` gives that count as a fraction of merged reads and
+warns when it exceeds 0.1% (plan §6.1).
 
 Example: [examples/read_funnel.tsv](examples/read_funnel.tsv).

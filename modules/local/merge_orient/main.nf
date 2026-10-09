@@ -1,6 +1,6 @@
 // MERGE_ORIENT: sense reads followed by the reverse-complemented antisense reads (§6.1 step 3).
-// Reads found in both orientation outputs are kept, as in the paper, and counted; above 0.1% of
-// merged reads a warning is written (plan §6.1: raise as an open question).
+// Reads found in both orientation outputs are kept, as in the paper, and counted (contract §5.2);
+// above 0.1% of merged reads a warning with the fraction goes to the log (plan §6.1: open question).
 process MERGE_ORIENT {
     tag "$meta.id"
     label 'process_single'
@@ -16,6 +16,7 @@ process MERGE_ORIENT {
     output:
     tuple val(meta), path("${prefix}.merged.fastq.gz")      , emit: reads
     tuple val(meta), path("${prefix}.both_orientations.tsv"), emit: both_orientations
+    tuple val(meta), path("${prefix}.merge_orient.log")     , emit: log
     tuple val("${task.process}"), val('coreutils'), eval("cat --version | sed '1!d;s/.* //'"), emit: versions_coreutils, topic: versions
 
     when:
@@ -32,10 +33,10 @@ process MERGE_ORIENT {
     both=\$(comm -12 <(ids ${sense}) <(ids ${antisense_rc}) | wc -l)
     merged=\$(bgzip -dc ${prefix}.merged.fastq.gz | awk 'END { print NR / 4 }')
     frac=\$(awk -v b="\$both" -v m="\$merged" 'BEGIN { printf "%.6f", (m > 0 ? b / m : 0) }')
-    printf "sample_id\\tn_reads_in_both_orientations\\tn_merged_reads\\tfraction\\n%s\\t%s\\t%s\\t%s\\n" \\
-        "${meta.id}" "\$both" "\$merged" "\$frac" > ${prefix}.both_orientations.tsv
+    printf "sample_id\\tn_reads_in_both_orientations\\n%s\\t%s\\n" "${meta.id}" "\$both" > ${prefix}.both_orientations.tsv
+    echo "${meta.id}: \$both of \$merged merged reads (\$frac) found in both orientations" > ${prefix}.merge_orient.log
     if awk -v f="\$frac" 'BEGIN { exit !(f > 0.001) }'; then
-        echo "WARNING: ${meta.id}: \$both reads (\$frac of merged reads) were found in both orientations (> 0.1%; plan §6.1)" >&2
+        echo "WARNING: above 0.1% of merged reads (plan §6.1: raise as an open question)" | tee -a ${prefix}.merge_orient.log >&2
     fi
     """
 
@@ -43,6 +44,7 @@ process MERGE_ORIENT {
     prefix = task.ext.prefix ?: "${meta.id}"
     """
     echo "" | bgzip -c > ${prefix}.merged.fastq.gz
-    printf "sample_id\\tn_reads_in_both_orientations\\tn_merged_reads\\tfraction\\n${meta.id}\\t0\\t0\\t0\\n" > ${prefix}.both_orientations.tsv
+    printf "sample_id\\tn_reads_in_both_orientations\\n${meta.id}\\t0\\n" > ${prefix}.both_orientations.tsv
+    touch ${prefix}.merge_orient.log
     """
 }

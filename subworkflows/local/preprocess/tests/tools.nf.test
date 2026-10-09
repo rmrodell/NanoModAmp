@@ -1,0 +1,79 @@
+// WP2 tests on single tools with the pipeline's arguments (plan §7 WP2, tests 3, 7, 14).
+// Fixtures: tests/fixtures/preprocess (see make_fixtures.py).
+
+nextflow_process {
+
+    name "Test cutadapt linked adapters (D4) and the 3′-only mode (D31)"
+    script "../../../../modules/nf-core/cutadapt/main.nf"
+    process "CUTADAPT"
+    tag "preprocess"
+    tag "cutadapt"
+
+    def fastq_names = { f ->
+        def l = new java.util.zip.GZIPInputStream(new FileInputStream(f.toString())).getText('UTF-8').readLines()
+        (0..<l.size()).step(4).collect { i -> l[i].substring(1).split(' ')[0] }
+    }
+    def fastq_seqs = { f ->
+        def l = new java.util.zip.GZIPInputStream(new FileInputStream(f.toString())).getText('UTF-8').readLines()
+        (0..<l.size()).step(4).collect { i -> l[i + 1] }
+    }
+
+    test("test 3: linked ONT pass discards reads with only one adapter (';required', D4)") {
+        config "./cutadapt_linked_ont.config"
+        when {
+            process {
+                """
+                input[0] = [[id: 'mpra_ont', single_end: true], file("${projectDir}/tests/fixtures/preprocess/fastq/mpra_ont.fastq.gz", checkIfExists: true)]
+                """
+            }
+        }
+        then {
+            def names = fastq_names(process.out.reads[0][1])
+            assertAll(
+                { assert process.success },
+                { assert names.size() == 7 },
+                { assert !names.contains('only_5p') },
+                { assert !names.contains('only_3p') },
+                { assert !names.contains('too_short') }
+            )
+        }
+    }
+
+    test("test 14: three_prime_only output equals legacy cutadapt 1.18 -m 125 -O 15 -a <S3>") {
+        config "./cutadapt_3prime.config"
+        when {
+            process {
+                """
+                input[0] = [[id: 'endo_3prime', single_end: true], file("${projectDir}/tests/fixtures/preprocess/fastq/endo_3prime.fastq.gz", checkIfExists: true)]
+                """
+            }
+        }
+        then {
+            def legacy = new File("${baseDir}/tests/fixtures/preprocess/legacy/endo_3prime.cutadapt118.fastq").readLines()
+            def legacy_names = (0..<legacy.size()).step(4).collect { i -> legacy[i].substring(1) }
+            def legacy_seqs  = (0..<legacy.size()).step(4).collect { i -> legacy[i + 1] }
+            assertAll(
+                { assert process.success },
+                { assert fastq_names(process.out.reads[0][1]) == legacy_names },
+                { assert fastq_seqs(process.out.reads[0][1]) == legacy_seqs }
+            )
+        }
+    }
+
+    test("test 14: the default linked pass discards reads that lack the 5′ ONT adapter") {
+        config "./cutadapt_linked_ont.config"
+        when {
+            process {
+                """
+                input[0] = [[id: 'endo_3prime', single_end: true], file("${projectDir}/tests/fixtures/preprocess/fastq/endo_3prime.fastq.gz", checkIfExists: true)]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert fastq_names(process.out.reads[0][1]).isEmpty() }
+            )
+        }
+    }
+}
