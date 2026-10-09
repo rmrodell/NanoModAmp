@@ -1,0 +1,11 @@
+# Figure 3 in vitro (modification_analysis.R): BS vs input. noPUS samples are labeled treat=input
+# in the sample sheet (D14), so no recoding happens here.
+analyses:
+  - name: invitro
+    type: treatment
+    subset: {celltype: [IV]}
+    random_effects: ""
+    sesoi: 0.05
+    fdr: 0.05
+    plot_all_sites: true
+    colors: {modified: "#c154c1", input: "#eee8aa"}
