@@ -29,10 +29,14 @@ default_colors <- function() {
 }
 
 #' Save a plot as `<path>.pdf` and `<path>.png` (D3).
+#'
+#' Very tall all-sites plots exceed cairo's 32767-pixel surface limit at the requested dpi; the
+#' PNG resolution is then lowered just enough to fit (the PDF is unaffected).
 #' @export
 save_plot <- function(p, path, width, height, dpi = 300, limitsize = TRUE) {
   dir.create(dirname(path), showWarnings = FALSE, recursive = TRUE)
   ggplot2::ggsave(paste0(path, ".pdf"), p, width = width, height = height, units = "in", limitsize = limitsize)
+  dpi <- min(dpi, floor(32000 / max(width, height)))
   ggplot2::ggsave(paste0(path, ".png"), p, width = width, height = height, units = "in", dpi = dpi,
                   limitsize = limitsize)
   invisible(paste0(path, c(".pdf", ".png")))
