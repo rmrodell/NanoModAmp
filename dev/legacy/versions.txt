@@ -1,0 +1,55 @@
+Legacy harness tool versions (recorded 2026-10-06 on sh02-07n03, job 46816746)
+================================================================================
+
+Modules each script loads
+-------------------------
+endogenous/20250418/dedup_mapping.sh   ml biology; ml py-cutadapt/1.18_py36; ml samtools
+                                       (umi_tools from ~/.local/bin under python/3.6.1, pulled in by py-cutadapt/1.18_py36)
+endogenous/20250418/DelDetect.sh       ml R            -> harness pins ml R/4.2.0
+endogenous/20251022/trim_map_dedup.sh  ml biology py-cutadapt/1.18_py36 samtools; ml python/3.6.1
+mpra_invitro/trim_map_dedup_mpra.sh    ml biology py-cutadapt/1.18_py36 samtools; ml python/3.6.1
+mpra_incell/trim_map_mpra.sh           ml biology py-cutadapt/1.18_py36 samtools; ml python/3.6.1
+*/BIDdetect.sh                         ml R            -> harness pins ml R/4.2.0
+modification_analysis.R / incell_analysis.R   require R >= 4.3 (script check; "module load R/4.3")
+analysis_endo.R                        no module line; uses lme4, car, DescTools, ggrepel, dplyr, tidyr, purrr, ggplot2
+The 2025 sbatch files additionally ran `ml R` before calling the shell scripts.
+
+Tool         Logged at paper-run time                          Available now (clean module env, env.sh)        Match
+-----------  ------------------------------------------------  ----------------------------------------------  -----
+cutadapt     1.18 with Python 3.6.1 (trimmed1.log, 2025-05-03;   1.18  /share/software/user/open/py-cutadapt/1.18_py36  yes
+             cutadapt_*.log 2025-10/11)
+umi_tools    1.1.6 (UMI_extract.log / *_umi_tools.log headers)   1.1.6 ~/.local/bin/umi_tools (Python 3.6.1)    yes
+minimap2     2.28-r1221-dirty (minimap2 log + BAM @PG, all runs) 2.28-r1221-dirty  /oak/.../rodell/minimap2/minimap2  yes
+             binary mtime 2024-11-10 (before all runs)
+samtools     1.16.1 (BAM @PG VN:1.16.1, all four runs)           1.16.1 (htslib 1.16)                           yes
+seqtk        not logged                                          1.5-r133  /home/users/rodell/seqtk/seqtk       likely
+             binary mtime 2025-09-03; repo 94e7070 (2025-06-01) -> same binary for runs 2025-10-29 / 2025-11-07
+             (20250418 run does not use seqtk)
+UMICollapse  not used by any paper run (F1)                      repo efeab35f (2024-04-01) at ~/UMICollapse    n/a
+R (counting) not logged; `ml R` default                          R 4.2.0 (current default), user lib            assumed
+             Rsamtools 2.14.0, GenomicAlignments 1.34.1, GenomicRanges 1.50.2, Biostrings 2.66.0,
+             data.table 1.16.0, optparse 1.7.5, future 1.58.0, future.apply 1.20.0, future.callr 0.10.1
+             (current versions; library mtimes not checked against run dates)
+R (site     not logged                                           R 4.3.2: argparse 2.3.1, dplyr 1.1.4, readr 2.1.5,  partial
+ calling)                                                        car 3.1.3, tidyr 1.3.1, purrr 1.0.2, ggplot2 3.5.0,
+                                                                 ggtext 0.1.2, blme 1.0.6, lme4 1.1.35.5, future 1.67.0,
+                                                                 furrr 0.3.1, forcats 1.0.0, DescTools 0.99.58;
+                                                                 ggrepel MISSING in the 4.3 library (needed by analysis_endo.R)
+
+Drift / risks
+-------------
+- Preprocessing tools (cutadapt, umi_tools, minimap2, samtools, seqtk) are the exact binaries/versions the runs logged.
+- R package versions for counting are current, not verified as the 2025 versions. Rsamtools pileup is
+  deterministic, so drift would show up as V1 count differences, not noise.
+- umi_tools dedup --method directional: with equal-count UMIs it picks a representative read, and that choice
+  depends on input order. Same reads in the same order should give the same choice, but L1 should confirm it.
+- The interactive session environment (code-server/R 4.2.0 stack) makes `ml py-cutadapt/1.18_py36` fail with a
+  toolchain conflict, and ~/.local/bin/cutadapt is a broken python3.9 install. Source env.sh (module purge) first.
+- analysis_endo.R cannot run unmodified: R 4.2.0 lacks lme4/car, and R 4.3.2 lacks ggrepel. Needs Becca's
+  decision (an approved install of ggrepel into the 4.3 user library) before V2 endogenous site calling.
+
+## Site-calling R environment (2026-10-06)
+R/4.3.2 (module) + user library ~/R/x86_64-pc-linux-gnu-library/4.3. ggrepel 0.9.8 installed from CRAN on 2026-10-06; others pre-existing:
+car 3.1.3, DescTools 0.99.58, dplyr 1.1.4, ggplot2 4.0.3, lme4 1.1.35.5, purrr 1.0.2, tidyr 1.3.1, blme 1.0.6, furrr 0.3.1,
+future 1.67.0, forcats 1.0.0, readr 2.1.5, argparse 2.3.1, ggtext 0.1.2. Package versions of the original 2025 runs are unknown.
+Note: `ml R/4.3.2` in a shell where R/4.2.0 was loaded may leave the 4.2.0 Rscript first on PATH; call /share/software/user/open/R/4.3.2/bin/Rscript or `ml purge` first.

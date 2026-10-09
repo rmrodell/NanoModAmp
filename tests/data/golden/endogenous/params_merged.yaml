@@ -1,0 +1,3 @@
+# Site calling on the counts-level merge of both runs (D32): pass the counts_merged.tsv of the two runs above
+input_counts: <outdir_20250418>/counts/counts_merged.tsv,<outdir_20251022>/counts/counts_merged.tsv
+analyses: analyses.yaml

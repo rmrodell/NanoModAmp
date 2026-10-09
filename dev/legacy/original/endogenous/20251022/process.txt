@@ -1,0 +1,87 @@
+# Step 1: Concatenate and unzip fastq files
+
+FASTQ_DIR="/oak/stanford/groups/nicolemm/rodell/BIDamplicon/endo_CellTypeSpec/20251022/20251022_1548_P2S-01916-A_PBE68110_b413b676/fastq_pass"
+DEST_DIR="/scratch/users/rodell/20251022_endoBID/fastq"
+BARCODES="/scratch/users/rodell/20251022_endoBID/barcodes.txt"
+
+bash $SCRATCH/20251022_endoBID/prep_fastq.sh -s $FASTQ_DIR -d $DEST_DIR -b $BARCODES
+
+
+# Step 2: Trim adapters, map, and deduplicate
+
+Test with a single file:
+
+# "Trick" the script into thinking it's task #1 of an array job
+export SLURM_ARRAY_TASK_ID=1
+
+# Manually set the CPU variable so the THREADS variable gets assigned correctly
+export SLURM_CPUS_PER_TASK=4
+
+# (Optional) You can also set the job ID for more complete logging
+export SLURM_ARRAY_JOB_ID="interactive_test"
+
+# Run the script for the sample on line 1 of the map file, using 4 threads
+bash $SCRATCH/20251022_endoBID/trim_map_dedup.sh \
+    --map_file /scratch/users/rodell/20251022_endoBID/barcodes.txt \
+    --input_dir /scratch/users/rodell/20251022_endoBID/fastq \
+    --output_dir /scratch/users/rodell/20251022_endoBID/mapping \
+    --ref_fasta /scratch/users/rodell/20251022_endoBID/set3.fa
+
+Submit all mapping tasks:
+bash $SCRATCH/20251022_endoBID/submit_trim_map_dedup.sh \
+    --mail-user rodell@stanford.edu \
+    --script-path /scratch/users/rodell/20251022_endoBID/trim_map_dedup.sh \
+    --sample-map /scratch/users/rodell/20251022_endoBID/barcodes.txt \
+    --input-dir /scratch/users/rodell/20251022_endoBID/fastq \
+    --output-dir /scratch/users/rodell/20251022_endoBID/mapping \
+    --ref_fa /scratch/users/rodell/20251022_endoBID/set3.fa
+
+[rodell@sh03-01n53 /scratch/users/rodell/20251022_endoBID] (job 8615005) $ bash $SCRATCH/20251022_endoBID/submit_trim_map_dedup.sh     --mail-user rodell@stanford.edu     --script-path /scratch/users/rodell/20251022_endoBID/trim_map_dedup.sh     --sample-map /scratch/users/rodell/20251022_endoBID/barcodes.txt     --input-dir /scratch/users/rodell/20251022_endoBID/fastq     --output-dir /scratch/users/rodell/20251022_endoBID/mapping     --ref_fa /scratch/users/rodell/20251022_endoBID/set3.fa
+--- Preparing SLURM Job Array Submission ---
+  CPUs per Task:    16
+  Memory per Task:  32G
+  Time Limit:       12:00:00
+  Partition:        normal
+  Notify Email:     rodell@stanford.edu
+  Pipeline Script:  /scratch/users/rodell/20251022_endoBID/trim_map_dedup.sh
+  Sample Map:       /scratch/users/rodell/20251022_endoBID/barcodes.txt
+  FASTQ Source Dir: /scratch/users/rodell/20251022_endoBID/fastq
+  Output Dir:       /scratch/users/rodell/20251022_endoBID/mapping
+  Reference Fasta:  /scratch/users/rodell/20251022_endoBID/set3.fa
+---------------------------------------------
+SLURM output/error logs will be saved in: /scratch/users/rodell/20251022_endoBID/mapping/slurm_logs
+Found 24 samples to process.
+Submitting array job...
+Submitted batch job 8623868
+--- Job array submitted successfully! ---
+
+Ran super quick.
+
+# Step 3: Count
+
+Make file count.sbatch:
+
+#!/usr/bin/bash
+#SBATCH --job-name=count_endoBID_%j
+#SBATCH --output=count_endoBID_%j.out
+#SBATCH --error=count_endoBID_%j.err
+#SBATCH --time=6:00:00
+#SBATCH -p normal
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=64GB
+#SBATCH --mail-user=rodell@stanford.edu
+#SBATCH --mail-type=BEGIN,END,FAIL
+
+bash $HOME/BIDamplicon/pipeline/BIDdetect.sh \
+  --bam_dir /scratch/users/rodell/20251022_endoBID/mapping/deduplicated_bam \
+  --output_dir /scratch/users/rodell/20251022_endoBID/counts_delpos \
+  --ref_fasta /scratch/users/rodell/20251022_endoBID/set3.fa \
+  --bed_file /scratch/users/rodell/20251022_endoBID/set3_delpos.bed
+
+bash $HOME/BIDamplicon/pipeline/BIDdetect.sh \
+  --bam_dir /scratch/users/rodell/20251022_endoBID/mapping/deduplicated_bam \
+  --output_dir /scratch/users/rodell/20251022_endoBID/counts_full \
+  --ref_fasta /scratch/users/rodell/20251022_endoBID/set3.fa \
+  --bed_file /scratch/users/rodell/20251022_endoBID/set3_fulllength.bed
+
+Submitted batch job 8640004

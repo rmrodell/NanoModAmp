@@ -1,0 +1,404 @@
+# Published harness: every change vs PUS7regulation2026 @ 4fd285b (see SOURCES.md).
+# Allowed edits: (a) keep pre-dedup filtered BAM, (b) tool paths/modules/no runtime installs, (c) config via env vars.
+# mpra_incell/trim_map_mpra_published.sh is a CONSTRUCTED variant, diffed against the Figure 3 original.
+# endogenous/trim_map_dedup_3prime_only.sh is a CONSTRUCTED variant (D31/R-29, golden 20250418 samples only), diffed against the Figure 2 original.
+diff -uN original/endogenous/trim_map_dedup.sh endogenous/trim_map_dedup.sh
+--- original/endogenous/trim_map_dedup.sh	2026-10-06 16:00:47.973337000 -0700
++++ endogenous/trim_map_dedup.sh	2026-10-06 16:01:49.805373000 -0700
+@@ -273,7 +273,7 @@
+ start_time=$(date +%s)
+ log_message "  - Reverse-complementing antisense reads..."
+ 
+-$HOME/seqtk/seqtk seq -r "$ANTISENSE_TRIM1_RAW" > "$ANTISENSE_TRIM1_RC"
++"${SEQTK:-$HOME/seqtk/seqtk}" seq -r "$ANTISENSE_TRIM1_RAW" > "$ANTISENSE_TRIM1_RC"
+ track_metrics "3a_Antisense_RC" "$ANTISENSE_TRIM1_RC"
+ log_message "  - Combining all reads into a single sense-oriented stream..."
+ 
+@@ -293,7 +293,8 @@
+ log_message "Step 5: Mapping reads with Minimap2..."
+ start_time=$(date +%s)
+ 
+-$OAK/rodell/minimap2/minimap2 \
++# published-harness edit (b): tool location
++"${MINIMAP2:-$OAK/rodell/minimap2/minimap2}" \
+     -ax splice -uf \
+     "$REF_FA" \
+     "$COMBINED_UMI" \
+@@ -326,7 +327,8 @@
+ # --- 8. Deduplicate Reads with UMI-tools ---
+ log_message "Step 8: Deduplicating reads with UMI-tools and indexing..."
+ start_time=$(date +%s)
+-$HOME/UMICollapse/umicollapse bam \
++# published-harness edit (b): tool location
++"${UMICOLLAPSE:-$HOME/UMICollapse/umicollapse}" bam \
+     -i "$HIGH_QUAL_PRIMARY_BAM" \
+     -o "$DEDUP_BAM"
+ track_metrics "8_Deduplicated_BAM" "$DEDUP_BAM"
+@@ -364,7 +366,10 @@
+ 
+ # --- Step 10: Clean up intermediate files ---
+ log_message "Step 10: Intermediate file cleanup is currently disabled."
+-rm -rf "$TMP_DIR"
++# rm -rf "$TMP_DIR"
++# published-harness edit (a): keep the pre-dedup filtered BAM (golden plan 4.3) instead of deleting tmp/
++mkdir -p "${TOP_LEVEL_OUTPUT_DIR}/retained"
++cp "$HIGH_QUAL_PRIMARY_BAM" "${HIGH_QUAL_PRIMARY_BAM}.bai" "${TOP_LEVEL_OUTPUT_DIR}/retained/"
+ 
+ log_message "--- Pipeline for ${SAMPLE_ID} finished successfully! ---"
+ 
+diff -uN original/endogenous/analysis_endo.R endogenous/analysis_endo.R
+--- original/endogenous/analysis_endo.R	2026-10-06 16:00:48.093898000 -0700
++++ endogenous/analysis_endo.R	2026-10-06 16:10:16.429078000 -0700
+@@ -10,7 +10,7 @@
+ library(ggrepel)
+ 
+ # ---- Directory ----
+-active_dir <- "~/PUS7regulation2026/Figure2/endo_sites"
++active_dir <- paste0(Sys.getenv("PUB_ENDO_DIR", "~/PUS7regulation2026/Figure2/endo_sites"), "/")  # published-harness edit (b): configurable dir + missing "/"
+ 
+ # ---- Colors ----
+ incell <- "#c154c1"
+diff -uN original/mpra_invitro/trim_map_dedup_mpra.sh mpra_invitro/trim_map_dedup_mpra.sh
+--- original/mpra_invitro/trim_map_dedup_mpra.sh	2026-10-06 16:00:48.185683000 -0700
++++ mpra_invitro/trim_map_dedup_mpra.sh	2026-10-06 16:01:49.810736000 -0700
+@@ -296,7 +296,7 @@
+ start_time=$(date +%s)
+ log_message "  - Reverse-complementing antisense reads..."
+ 
+-$HOME/seqtk/seqtk seq -r "$ANTISENSE_TRIM1_RAW" > "$ANTISENSE_TRIM1_RC"
++"${SEQTK:-$HOME/seqtk/seqtk}" seq -r "$ANTISENSE_TRIM1_RAW" > "$ANTISENSE_TRIM1_RC"
+ track_metrics "3a_Antisense_RC" "$ANTISENSE_TRIM1_RC"
+ log_message "  - Combining all reads into a single sense-oriented stream..."
+ 
+@@ -327,7 +327,8 @@
+ log_message "Step 6: Mapping reads with Minimap2..."
+ start_time=$(date +%s)
+ 
+-$OAK/rodell/minimap2/minimap2 \
++# published-harness edit (b): tool location
++"${MINIMAP2:-$OAK/rodell/minimap2/minimap2}" \
+     -ax sr \
+     "$REF_FA" \
+     "$COMBINED_TRIM2" \
+@@ -360,7 +361,8 @@
+ # --- 9. Deduplicate Reads with UMI-tools ---
+ log_message "Step 9: Deduplicating reads with UMI-tools and indexing..."
+ start_time=$(date +%s)
+-$HOME/UMICollapse/umicollapse bam \
++# published-harness edit (b): tool location
++"${UMICOLLAPSE:-$HOME/UMICollapse/umicollapse}" bam \
+     -i "$HIGH_QUAL_PRIMARY_BAM" \
+     -o "$DEDUP_BAM"
+ track_metrics "9_Deduplicated_BAM" "$DEDUP_BAM"
+@@ -397,7 +399,10 @@
+ 
+ # --- Clean up intermediate files ---
+ log_message "Remove intermediary files."
+-rm -rf "$TMP_DIR"
++# rm -rf "$TMP_DIR"
++# published-harness edit (a): keep the pre-dedup filtered BAM (golden plan 4.3) instead of deleting tmp/
++mkdir -p "${TOP_LEVEL_OUTPUT_DIR}/retained"
++cp "$HIGH_QUAL_PRIMARY_BAM" "${HIGH_QUAL_PRIMARY_BAM}.bai" "${TOP_LEVEL_OUTPUT_DIR}/retained/"
+ 
+ log_message "--- Pipeline for ${SAMPLE_ID} finished successfully! ---"
+ 
+diff -uN original/mpra_invitro/modification_analysis.R mpra_invitro/modification_analysis.R
+--- original/mpra_invitro/modification_analysis.R	2026-10-06 16:00:48.291651000 -0700
++++ mpra_invitro/modification_analysis.R	2026-10-06 16:01:31.756297000 -0700
+@@ -72,7 +72,7 @@
+ 
+ if (length(missing_packages) > 0) {
+   cat("Installing missing packages:", paste(missing_packages, collapse = ", "), "\n")
+-  install.packages(missing_packages, repos = "http://cran.us.r-project.org")
++  stop("Missing R packages: ", paste(missing_packages, collapse = ", "), " (published-harness edit (b): no runtime installs on Sherlock)")
+ }
+ 
+ suppressPackageStartupMessages({
+diff -uN original/mpra_incell/incell_analysis.R mpra_incell/incell_analysis.R
+--- original/mpra_incell/incell_analysis.R	2026-10-06 16:00:48.386210000 -0700
++++ mpra_incell/incell_analysis.R	2026-10-06 16:10:16.424554000 -0700
+@@ -27,11 +27,11 @@
+ # Set all your analysis parameters in this section.
+ 
+ # --- 1. Global Settings ---
+-input_file      <- "BIDdetect_data.txt"
+-output_dir      <- "incell"
++input_file      <- Sys.getenv("PUB_INPUT", "BIDdetect_data.txt")  # published-harness edit (c)
++output_dir      <- Sys.getenv("PUB_OUTDIR", "incell")  # published-harness edit (c)
+ 
+ # Execution Options
+-num_cores       <- 8     # -1 for all available cores, 1 for sequential
++num_cores       <- as.integer(Sys.getenv("PUB_CORES", "8"))     # -1 for all available cores, 1 for sequential
+ plot_all_sites  <- TRUE
+ sesoi           <- 0.05    # Single threshold for TOST and effect size filtering
+ 
+@@ -39,7 +39,7 @@
+ # Set to TRUE or FALSE to enable/disable entire analysis sections
+ run_wt_modification_analysis <- TRUE
+ run_pus7_dependency_analysis <- TRUE
+-run_cell_type_analysis       <- TRUE
++run_cell_type_analysis       <- as.logical(Sys.getenv("PUB_RUN_CELLTYPE", "TRUE"))  # published-harness edit (c): golden run sets FALSE (cell-type out of scope, Becca 2026-10-06)
+ 
+ # --- 3. Analysis-Specific Parameters & Palettes ---
+ 
+@@ -88,7 +88,7 @@
+ missing_packages <- required_packages[!sapply(required_packages, requireNamespace, quietly = TRUE)]
+ if (length(missing_packages) > 0) {
+   cat("Installing missing packages:", paste(missing_packages, collapse = ", "), "\n")
+-  install.packages(missing_packages, repos = "http://cran.us.r-project.org")
++  stop("Missing R packages: ", paste(missing_packages, collapse = ", "), " (published-harness edit (b): no runtime installs on Sherlock)")
+ }
+ suppressPackageStartupMessages({lapply(required_packages, library, character.only = TRUE)})
+ cat("✓ Libraries loaded successfully.\n\n")
+diff -uN original/common/BIDdetect.sh common/BIDdetect.sh
+--- original/common/BIDdetect.sh	2026-10-06 16:00:48.475659000 -0700
++++ common/BIDdetect.sh	2026-10-06 16:01:31.752066000 -0700
+@@ -74,7 +74,7 @@
+ # --- 3. Setup Environment and Logging ---
+ 
+ # Load required modules
+-ml R
++ml R/4.2.0  # published-harness edit (b): pin the default R module of 2025
+ 
+ # Create output directories
+ LOG_DIR="${DEST_DIR}/logs"
+diff -uN original/common/bam_counts_fast.R common/bam_counts_fast.R
+diff -uN original/common/sample_name.R common/sample_name.R
+diff -uN original/mpra_invitro/trim_map_dedup_mpra.sh mpra_incell/trim_map_mpra_published.sh
+--- original/mpra_invitro/trim_map_dedup_mpra.sh	2026-10-06 16:00:48.185683000 -0700
++++ mpra_incell/trim_map_mpra_published.sh	2026-10-06 16:05:52.429018000 -0700
+@@ -1,5 +1,21 @@
+ #!/bin/bash
+ #
++# CONSTRUCTED VARIANT for the golden package in-cellulo MPRA run (Becca, 2026-10-06).
++# This exact combination was NEVER run for the paper. The in-cellulo library has no ONT
++# adapters and no UMIs (paper run: dev/legacy/mpra_incell/trim_map_mpra.sh, pool adapters
++# only, no UMI, no dedup), so the published trim_map_dedup_mpra.sh would discard every read.
++# It is the published Figure 3 script (PUS7regulation2026 @ 4fd285b) with:
++#   - orientation passes on the MPRA pool adapters (sense GACGCTCTTCCGATCT...CACTCGGGCACCAAGGAC,
++#     antisense GTCCTTGGTGCCCGAGTG...AGATCGGAAGAGCGTC, -m 125 -O 15, as in the legacy in-cellulo
++#     script) instead of the ONT adapters;
++#   - no umi_tools extract, no second pool trim (the pool adapters are already removed), no UMICollapse;
++#   - published mapping and filters kept: minimap2 -ax sr, -F 2304, -q 30.
++# The final BAM is the filtered primary, MAPQ>=30 BAM. Every change is marked "CONSTRUCTED".
++# SCOPE: applies ONLY to the paper's golden in-cellulo samples (run 20241114), whose library was
++# built without ONT adapters or UMIs. It is not a general in-cellulo protocol: the production
++# pipeline's defaults keep ONT trimming + UMI extraction + dedup for all data, including in cellulo.
++# The production pipeline reproduces this variant only when run with orientation_adapters=pool, umi=false.
++#
+ # A generalized pipeline for processing fastq files for Nano-BID-Amp processing.
+ # This script is designed to be called as a SLURM array task.
+ #
+@@ -168,7 +184,7 @@
+ 
+ # Define output directories based on parsed info
+ PROJECT_DIR="${TOP_LEVEL_OUTPUT_DIR}/${SAMPLE_ID}"
+-FINAL_COMMON_DIR="${TOP_LEVEL_OUTPUT_DIR}/deduplicated_bam"
++FINAL_COMMON_DIR="${TOP_LEVEL_OUTPUT_DIR}/final_bam"  # CONSTRUCTED (in cellulo): no dedup
+ 
+ # Load modules
+ ml biology py-cutadapt/1.18_py36 samtools
+@@ -182,13 +198,11 @@
+ ################################################################################
+ ###                  USER DEFINED VARIABLES                                  ###
+ ################################################################################
+-SENSE_ADAPTER_5PRIME="TTTCTGTTGGTGCTGATATTGCG"
+-SENSE_ADAPTER_3PRIME="GAAGATAGAGCGACAGGCAAGT"
+-ANTISENSE_ADAPTER_5PRIME="ACTTGCCTGTCGCTCTATCTTC"
+-ANTISENSE_ADAPTER_3PRIME="CGCAATATCAGCACCAACAGAAA"
+-POOL_SENSE_ADAPTER_5PRIME="GACGCTCTTCCGATCT"
+-POOL_SENSE_ADAPTER_3PRIME="CACTCGGGCACCAAGGAC"
+-UMI_PATTERN="NNNNNNNNNN"
++# CONSTRUCTED (in cellulo): orientation passes use the pool adapters (legacy in-cellulo values); no UMI
++SENSE_ADAPTER_5PRIME="GACGCTCTTCCGATCT"
++SENSE_ADAPTER_3PRIME="CACTCGGGCACCAAGGAC"
++ANTISENSE_ADAPTER_5PRIME="GTCCTTGGTGCCCGAGTG"
++ANTISENSE_ADAPTER_3PRIME="AGATCGGAAGAGCGTC"
+ MAPQ_THRESHOLD=30
+ 
+ # SLURM-aware thread count
+@@ -296,7 +310,7 @@
+ start_time=$(date +%s)
+ log_message "  - Reverse-complementing antisense reads..."
+ 
+-$HOME/seqtk/seqtk seq -r "$ANTISENSE_TRIM1_RAW" > "$ANTISENSE_TRIM1_RC"
++"${SEQTK:-$HOME/seqtk/seqtk}" seq -r "$ANTISENSE_TRIM1_RAW" > "$ANTISENSE_TRIM1_RC"
+ track_metrics "3a_Antisense_RC" "$ANTISENSE_TRIM1_RC"
+ log_message "  - Combining all reads into a single sense-oriented stream..."
+ 
+@@ -305,32 +319,17 @@
+ track_metrics "3b_Combined_Trim1" "$COMBINED_TRIM1"
+ end_time=$(date +%s); log_message "Step 3 finished. Duration: $(format_duration $((end_time - start_time)))"
+ 
+-# --- 4. Extract UMIs from Combined File ---
+-log_message "Step 4: Extracting UMIs from 3' end of all reads..."
+-start_time=$(date +%s)
+-umi_tools extract -I "$COMBINED_TRIM1" --extract-method=string --bc-pattern="$UMI_PATTERN" --3prime -L "${LOGS_DIR}/${SAMPLE_ID}_umi_tools.log" > "$COMBINED_UMI"
+-track_metrics "4_Combined_UMI" "$COMBINED_UMI"
+-end_time=$(date +%s); log_message "Step 4 finished. Duration: $(format_duration $((end_time - start_time)))"
+-
+-# --- 5. Perform Final Trimming on Combined File ---
+-log_message "Step 5: Performing secondary trimming on all reads..."
+-start_time=$(date +%s)
+-cutadapt --discard-untrimmed -m 120 -O 10 --cores="$THREADS" \
+-    -g "$POOL_SENSE_ADAPTER_5PRIME...$POOL_SENSE_ADAPTER_3PRIME" \
+-    -o "$COMBINED_TRIM2" \
+-    "$COMBINED_UMI" > "${LOGS_DIR}/${SAMPLE_ID}_cutadapt_final_trim.log"
+-
+-track_metrics "5_Final_Trimmed" "$COMBINED_TRIM2"
+-end_time=$(date +%s); log_message "Step 5 finished. Duration: $(format_duration $((end_time - start_time)))"
++# CONSTRUCTED (in cellulo): steps 4 (umi_tools extract) and 5 (second pool trim) removed
+ 
+ # --- 6. Map reads with Minimap2 ---
+ log_message "Step 6: Mapping reads with Minimap2..."
+ start_time=$(date +%s)
+ 
+-$OAK/rodell/minimap2/minimap2 \
++# published-harness edit (b): tool location
++"${MINIMAP2:-$OAK/rodell/minimap2/minimap2}" \
+     -ax sr \
+     "$REF_FA" \
+-    "$COMBINED_TRIM2" \
++    "$COMBINED_TRIM1" \
+     -t "$THREADS" \
+     > "$MAPPED_SAM"
+ 
+@@ -357,14 +356,8 @@
+ track_metrics "8b_High_Qual_Primary_BAM" "$HIGH_QUAL_PRIMARY_BAM"
+ end_time=$(date +%s); log_message "Step 8 finished. Duration: $(format_duration $((end_time - start_time)))"
+ 
+-# --- 9. Deduplicate Reads with UMI-tools ---
+-log_message "Step 9: Deduplicating reads with UMI-tools and indexing..."
+-start_time=$(date +%s)
+-$HOME/UMICollapse/umicollapse bam \
+-    -i "$HIGH_QUAL_PRIMARY_BAM" \
+-    -o "$DEDUP_BAM"
+-track_metrics "9_Deduplicated_BAM" "$DEDUP_BAM"
+-end_time=$(date +%s); log_message "Step 9 finished. Duration: $(format_duration $((end_time - start_time)))"
++# CONSTRUCTED (in cellulo): step 9 (UMICollapse) removed; the final BAM is the filtered BAM
++DEDUP_BAM="$HIGH_QUAL_PRIMARY_BAM"
+ 
+ # --- Step 10: Copy Final BAM to Common Output Directory ---
+ log_message "Step 10: Copying and indexing final BAM..."
+@@ -397,7 +390,10 @@
+ 
+ # --- Clean up intermediate files ---
+ log_message "Remove intermediary files."
+-rm -rf "$TMP_DIR"
++# rm -rf "$TMP_DIR"
++# published-harness edit (a): keep the pre-dedup filtered BAM (golden plan 4.3) instead of deleting tmp/
++mkdir -p "${TOP_LEVEL_OUTPUT_DIR}/retained"
++cp "$HIGH_QUAL_PRIMARY_BAM" "${HIGH_QUAL_PRIMARY_BAM}.bai" "${TOP_LEVEL_OUTPUT_DIR}/retained/"
+ 
+ log_message "--- Pipeline for ${SAMPLE_ID} finished successfully! ---"
+ 
+diff -uN original/endogenous/trim_map_dedup.sh endogenous/trim_map_dedup_3prime_only.sh
+--- original/endogenous/trim_map_dedup.sh	2026-10-06 16:00:47.973337000 -0700
++++ endogenous/trim_map_dedup_3prime_only.sh	2026-10-06 16:20:43.845481000 -0700
+@@ -1,5 +1,14 @@
+ #!/bin/bash
+ #
++# CONSTRUCTED VARIANT (D31, R-29; Becca 2026-10-06) of the published Figure 2 trim_map_dedup.sh.
++# SCOPE: ONLY the golden endogenous run 20250418 samples. Their reads lack the 5' ONT adapter
++# (basecalled/trimmed differently), so the published linked sense/antisense passes keep ~0 reads.
++# The paper processed this run with a single 3'-adapter cutadapt pass (dev/legacy/endogenous/
++# 20250418/dedup_mapping.sh); that pass replaces steps 2-3 here. Everything else is the published
++# script: umi_tools extract, minimap2 -ax splice -uf, -F 2304, -q 30, UMICollapse.
++# This combination never existed in the paper. Production default still requires both adapters
++# (D4); the 3'-only mode is an explicit opt-in. Every change is marked "CONSTRUCTED (20250418)".
++#
+ # A generalized pipeline for processing fastq files for Nano-BID-Amp processing.
+ # This script is designed to be called as a SLURM array task.
+ #
+@@ -235,53 +244,20 @@
+ track_metrics "1_Initial_FASTQ" "$RAW_FASTQ"
+ end_time=$(date +%s); log_message "Step 1 finished. Duration: $(format_duration $((end_time - start_time)))"
+ 
+-# --- 2. Filter and Trim FASTQ streams ---
+-log_message "Step 2: Filtering, trimming, and sanitizing streams..."
++# --- 2-3. CONSTRUCTED (20250418): legacy single 3'-adapter pass replaces the linked passes + RC/merge ---
++log_message "Step 2: CONSTRUCTED (20250418) single 3'-adapter trim (untrimmed reads kept)..."
+ start_time=$(date +%s)
+-
+-# Pass 2a: Filter Sense reads
+-log_message "  - Pass 2a: Filtering for Sense reads..."
+ cutadapt \
+     -m 125 \
+     -O 15 \
+     --cores="$THREADS" \
+-    --discard-untrimmed \
+-    -g "$SENSE_ADAPTER_5PRIME...$SENSE_ADAPTER_3PRIME" \
+-    -o "$SENSE_TRIM1_RAW" \
++    -a "$SENSE_ADAPTER_3PRIME" \
++    -o "$COMBINED_TRIM1" \
+     "$RAW_FASTQ" \
+-    > "${LOGS_DIR}/${SAMPLE_ID}_cutadapt_sense_filter.log"
+-track_metrics "2a_Sense_Trim1_Raw" "$SENSE_TRIM1_RAW" 
+-
+-# Pass 2b: Filter Antisense reads
+-log_message "  - Pass 2b: Filtering for Antisense reads..."
+-cutadapt \
+-    -m 125 \
+-    -O 15 \
+-    --cores="$THREADS" \
+-    --discard-untrimmed \
+-    -g "$ANTISENSE_ADAPTER_5PRIME...$ANTISENSE_ADAPTER_3PRIME" \
+-    -o "$ANTISENSE_TRIM1_RAW" \
+-    "$RAW_FASTQ" \
+-    > "${LOGS_DIR}/${SAMPLE_ID}_cutadapt_antisense_filter.log"
+-track_metrics "2b_Antisense_Trim1_Raw" "$ANTISENSE_TRIM1_RAW" 
+-
++    > "${LOGS_DIR}/${SAMPLE_ID}_cutadapt_3prime_only.log"
++track_metrics "2_3prime_Trim" "$COMBINED_TRIM1"
+ end_time=$(date +%s); log_message "Step 2 finished. Duration: $(format_duration $((end_time - start_time)))"
+ 
+-
+-# --- 3. Unify Read Orientation ---
+-log_message "Step 3: Unifying read orientation..."
+-start_time=$(date +%s)
+-log_message "  - Reverse-complementing antisense reads..."
+-
+-$HOME/seqtk/seqtk seq -r "$ANTISENSE_TRIM1_RAW" > "$ANTISENSE_TRIM1_RC"
+-track_metrics "3a_Antisense_RC" "$ANTISENSE_TRIM1_RC"
+-log_message "  - Combining all reads into a single sense-oriented stream..."
+-
+-# Combine the sense file and the RC antisense file
+-cat "$SENSE_TRIM1_RAW" "$ANTISENSE_TRIM1_RC" > "$COMBINED_TRIM1"
+-track_metrics "3b_Combined_Trim1" "$COMBINED_TRIM1"
+-end_time=$(date +%s); log_message "Step 3 finished. Duration: $(format_duration $((end_time - start_time)))"
+-
+ # --- 4. Extract UMIs from Combined File ---
+ log_message "Step 4: Extracting UMIs from 3' end of all reads..."
+ start_time=$(date +%s)
+@@ -293,7 +269,8 @@
+ log_message "Step 5: Mapping reads with Minimap2..."
+ start_time=$(date +%s)
+ 
+-$OAK/rodell/minimap2/minimap2 \
++# published-harness edit (b): tool location
++"${MINIMAP2:-$OAK/rodell/minimap2/minimap2}" \
+     -ax splice -uf \
+     "$REF_FA" \
+     "$COMBINED_UMI" \
+@@ -326,7 +303,8 @@
+ # --- 8. Deduplicate Reads with UMI-tools ---
+ log_message "Step 8: Deduplicating reads with UMI-tools and indexing..."
+ start_time=$(date +%s)
+-$HOME/UMICollapse/umicollapse bam \
++# published-harness edit (b): tool location
++"${UMICOLLAPSE:-$HOME/UMICollapse/umicollapse}" bam \
+     -i "$HIGH_QUAL_PRIMARY_BAM" \
+     -o "$DEDUP_BAM"
+ track_metrics "8_Deduplicated_BAM" "$DEDUP_BAM"
+@@ -364,7 +342,10 @@
+ 
+ # --- Step 10: Clean up intermediate files ---
+ log_message "Step 10: Intermediate file cleanup is currently disabled."
+-rm -rf "$TMP_DIR"
++# rm -rf "$TMP_DIR"
++# published-harness edit (a): keep the pre-dedup filtered BAM (golden plan 4.3) instead of deleting tmp/
++mkdir -p "${TOP_LEVEL_OUTPUT_DIR}/retained"
++cp "$HIGH_QUAL_PRIMARY_BAM" "${HIGH_QUAL_PRIMARY_BAM}.bai" "${TOP_LEVEL_OUTPUT_DIR}/retained/"
+ 
+ log_message "--- Pipeline for ${SAMPLE_ID} finished successfully! ---"
+ 

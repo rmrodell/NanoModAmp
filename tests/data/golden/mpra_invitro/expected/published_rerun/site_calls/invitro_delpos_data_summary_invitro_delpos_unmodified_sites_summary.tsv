@@ -1,0 +1,3 @@
+chr	pos	category	avg_delrate_BS	avg_delrate_input	delta_delrate	p.adjust_diff	equivalence_status	site_specific_eqbound
+ZNF644_chr1_90937791	66	Unmodified	0.0052910052910053	0.004089996654399465	0.0012010086366058348	NA	NA	NA
+TRIM71_chr3_32832759	66	Unmodified	0.00242718446601942	0.006706887883358475	-0.004279703417339055	NA	NA	NA

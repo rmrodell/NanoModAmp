@@ -1,0 +1,13 @@
+# Published harness tool versions (2026-10-06, Sherlock)
+PUS7regulation2026 commit: 4fd285ba2cc3c4f2e41d292f448e3acff12a9fc1 (2026-04-24)
+Modules loaded by the preprocessing scripts: biology py-cutadapt/1.18_py36 samtools; python/3.6.1; devel java/11
+cutadapt 1.18
+umi_tools 1.1.6 (pip --user under python/3.6.1; extract only)
+samtools 1.16.1
+minimap2 2.28-r1221-dirty  (/oak/stanford/groups/nicolemm/rodell/minimap2/minimap2)
+seqtk 1.5-r133            (/home/users/rodell/seqtk/seqtk)
+UMICollapse git efeab35f5d29dec1d496ade3f681eeb34d9c2057 (2024-04-01), /home/users/rodell/UMICollapse/umicollapse
+  wrapper: java -server -Xms12G -Xmx512G -Xss20M -jar umicollapse.jar  -> jobs need >= ~14 GB memory
+java 11.0.11 (module java/11)
+Counting: R/4.2.0 module (BIDdetect.sh `ml R/4.2.0`)
+Site calling: R/4.3.2 (/share/software/user/open/R/4.3.2/bin/Rscript) + ~/R/x86_64-pc-linux-gnu-library/4.3; package versions in dev/legacy/versions.txt

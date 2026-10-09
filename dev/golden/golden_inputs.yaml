@@ -1,0 +1,156 @@
+# =============================================================================
+# golden_inputs.yaml: inputs for building the NanoModAmp golden test package
+# See golden_test_package_plan.md, sections 2 and 4.
+#
+# HOW TO FILL IN
+#   - Use absolute paths only. Environment variables ($HOME, $OAK) are NOT expanded.
+#   - Each comment says whether the value is a [FILE] or a [DIR], and whether it
+#     is REQUIRED or OPTIONAL. Leave an OPTIONAL value as "" or commented out.
+#   - Each experiment has a "runs:" list with one block per sequencing run.
+#     Keys set inside a run override the experiment-level value of the same name.
+#   - Lines marked "TODO" still need your input before the build can start.
+#   - When finished, copy this file to dev/golden/golden_inputs.yaml in the
+#     NanoModAmp repo.
+# =============================================================================
+
+sherlock:
+  workdir: "/scratch/users/rodell/NanoModAmp_build"   # [DIR] REQUIRED  scratch space for intermediates
+  partition: "normal"                                 #       REQUIRED  SLURM partition
+  mail_user: "rodell@stanford.edu"
+
+# Legacy tool locations on Sherlock, used to rerun the paper pipeline exactly.
+# Leave a value "" if the tool is loaded with a module (`ml`) instead.
+legacy_tools:
+  seqtk: "/home/users/rodell/seqtk/seqtk"                                 # [FILE]
+  minimap2: "/oak/stanford/groups/nicolemm/rodell/minimap2/minimap2"      # [FILE]
+  umicollapse: "/home/users/rodell/UMICollapse/umicollapse"               # [FILE]
+  umi_tools: ""                                                           # [FILE] "" = from the python/3.6.1 module
+
+# Allowed values for each run's processing_script (the script that produced the paper BAMs and counts):
+#   fig2_trim_map_dedup        PUS7regulation2026/Figure2/file_prep/trim_map_dedup.sh
+#   fig3_trim_map_dedup_mpra   PUS7regulation2026/Figure3/file_prep/trim_map_dedup_mpra.sh
+#   legacy_dedup_mapping       BIDamplicon/legacy/dedup/dedup_mapping.sh  (umi_tools dedup; BAMs in minimap2/dedup/)
+#   legacy_dedup_pool          BIDamplicon/legacy/dedup_pool/dedup_mapping.sh
+#   other:<path>               any other script (give its path)
+
+experiments:
+
+  # ---------------------------------------------------------------------------
+  # Figure 2: endogenous Nano-BID-Amp
+  # ---------------------------------------------------------------------------
+  endogenous:
+    library_type: endogenous
+    col_names: "celltype_vector_rep_treat"   # REQUIRED  order of the sample_id fields
+
+    # Experiment-level settings: every endogenous run uses the same reference.
+    reference_fasta: "/home/groups/nicolemm/rodell/fastas/endoG1G2.fasta"   # [FILE] REQUIRED  used for ALL endogenous runs
+    bed_amplicon: "/home/groups/nicolemm/rodell/fastas/endoG1G2_full.bed"   # [FILE] reference only (not used for the paper counts)
+    bed_position: "/home/groups/nicolemm/rodell/fastas/endoG1G2_delpos.bed" # [FILE] single-site BED
+    bed_used_for_paper_counts: "bed_position"   # the paper used the single-site BED; use it for counting and troubleshooting
+
+    runs:
+      - run_id: "20250418"
+        processing_script: "other:dev/legacy/endogenous/20250418/dedup_map_folder.sh"   # F1 decision (Becca, 2026-10-06): "Scripts actually run" -- harness reruns the script executed for the paper run; see dev/legacy/SOURCES.md
+        fastq_dir: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/endo_CellTypeSpec/20250418_endoBID/20250503_70/fastq"   # [DIR]
+        sample_map: "none"          # no sample map for this run; sample_id = FASTQ basename (the legacy script uses <sample>.fq)
+        paper_bam_dir: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/endo_CellTypeSpec/20250418_endoBID/20250503_70/deduplication/minimap2/sorted"   # [DIR] legacy layout: sorted/ = pre-dedup, dedup/ = deduplicated
+        paper_counts: "/scratch/users/rodell/NanoModAmp_build/endoBID_data/20250418_BIDdetect_data.txt"   # [FILE]
+
+      - run_id: "20250522"
+        processing_script: "legacy_dedup_mapping"   # not harnessed: run has none of the selected chrs (preflight F3); executed version not verified
+        fastq_dir: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/endo_CellTypeSpec/20250522/20250522_1311_P2S-01916-A_PBC50989_ce73e5fd/fastq_pass"
+        sample_map: "/scratch/users/rodell/NanoModAmp_build/20250522_endoBID_barcodes.txt"
+        paper_bam_dir: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/endo_CellTypeSpec/20250522_endoBID/deduplication/minimap2/sorted"   # legacy layout (see 20250418)
+        paper_counts: "/scratch/users/rodell/NanoModAmp_build/endoBID_data/20250522_BIDdetect_data.txt"
+
+      - run_id: "20250606"
+        processing_script: "legacy_dedup_mapping"   # not harnessed: run has none of the selected chrs (preflight F3); executed version not verified
+        fastq_dir: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/endo_CellTypeSpec/20250606_1037_P2S-01916-A_PBE25445_959d5a6f/fastq_pass"
+        sample_map: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/endo_CellTypeSpec/20250606_endoBID/fastq/barcodes.txt"
+        paper_bam_dir: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/endo_CellTypeSpec/20250606_endoBID/deduplication/minimap2/sorted"   # legacy layout (see 20250418)
+        paper_counts: "/scratch/users/rodell/NanoModAmp_build/endoBID_data/20250606_BIDdetect_data.txt"
+
+      - run_id: "20251022"
+        processing_script: "other:dev/legacy/endogenous/20251022/trim_map_dedup.sh"   # F1 decision (Becca, 2026-10-06): "Scripts actually run" -- harness reruns the script executed for the paper run; see dev/legacy/SOURCES.md
+        fastq_dir: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/endo_CellTypeSpec/20251022/20251022_1548_P2S-01916-A_PBE68110_b413b676/fastq_pass"
+        sample_map: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/endo_CellTypeSpec/20251022_endoBID/barcodes.txt"
+        paper_bam_dir: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/endo_CellTypeSpec/20251022_endoBID/mapping/deduplicated_bam"
+        paper_counts: "/scratch/users/rodell/NanoModAmp_build/endoBID_data/20251022_BIDdetect_data.txt"
+
+    # Optional paper outputs
+    # paper_counts_raw: ""          # [FILE] OPTIONAL
+    # paper_site_calls:             # [FILE/DIR] OPTIONAL  Figure 2 site-calling outputs
+    #   - ""
+    # paper_design_workbook: ""     # [FILE] OPTIONAL  design Excel with the "Amplicons" sheet (primer_plan.md, Gate P2)
+
+    # Selection
+    chr_list: "/scratch/users/rodell/NanoModAmp_build/endoBID_data/endo_chr.txt"   # [FILE] REQUIRED  one chr per line
+    samples: auto
+
+  # ---------------------------------------------------------------------------
+  # Figure 3: MPRA Nano-BID-Amp, in vitro
+  # ---------------------------------------------------------------------------
+  mpra_invitro:
+    library_type: mpra
+    col_names: "celltype_vector_treat_rep"   # REQUIRED  confirm (the shipped in vitro file has treat before rep)
+
+    reference_fasta: "/home/groups/nicolemm/rodell/pool1/pool1_cleaned_noadapters.fasta"
+    bed_amplicon: "/home/groups/nicolemm/rodell/pool1/pool1_cleaned_delpos_noadapters.bed"   # single-site (delpos) BED passed to BIDdetect.sh
+    bed_used_for_paper_counts: "bed_amplicon"
+
+    runs:
+      - run_id: "may"
+        processing_script: "other:dev/legacy/mpra_invitro/trim_map_dedup_mpra.sh"   # F1 decision (Becca, 2026-10-06): "Scripts actually run" -- harness reruns the script executed for the paper run; see dev/legacy/SOURCES.md
+        fastq_dir: "/oak/stanford/groups/nicolemm/mmontes/053025_IVpsi_pool1_enzymeTestBS/RUN1/20250530_1516_P2S-01916-B_PBC44754_1d396595/fastq_pass"
+        sample_map: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/Pool1/invitro/barcodes_may.txt"
+        paper_bam_dir: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/Pool1/invitro/maydata/deduplicated_bam"
+
+      - run_id: "june"
+        processing_script: "other:dev/legacy/mpra_invitro/trim_map_dedup_mpra.sh"   # F1 decision (Becca, 2026-10-06): "Scripts actually run" -- harness reruns the script executed for the paper run; see dev/legacy/SOURCES.md
+        fastq_dir: "/oak/stanford/groups/nicolemm/mmontes/062025_IVPsi_pool1_timepointsPUS7Me/RUN1/20250620_1620_P2S-01916-A_PBE68430_76471c89/fastq_pass"
+        sample_map: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/Pool1/invitro/barcodes_june.txt"
+        paper_bam_dir: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/Pool1/invitro/junedata/deduplicated_bam"
+
+    # One combined count table covers both runs. sample_ids must be unique across runs.
+    paper_counts: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/Pool1/invitro/counts_delpos/BIDdetect_data_invitro_delpos.txt"
+    paper_counts_raw: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/Pool1/invitro/counts_delpos/BIDdetect_counts.txt"
+    paper_site_calls:
+      - "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/Pool1/invitro/analysis_delpos/invitro_delpos"   # [DIR] searched recursively
+
+    chr_list: "/scratch/users/rodell/NanoModAmp_build/pool1_chr.txt"
+    samples: auto
+
+  # ---------------------------------------------------------------------------
+  # Figure 3: MPRA Nano-BID-Amp, in cellulo (one run; same layout for consistency)
+  # ---------------------------------------------------------------------------
+  mpra_incell:
+    library_type: mpra
+    col_names: "celltype_vector_rep_treat"   # REQUIRED  confirm
+
+    reference_fasta: "/home/groups/nicolemm/rodell/pool1/pool1_cleaned_noadapters.fasta"
+    bed_amplicon: "/home/groups/nicolemm/rodell/pool1/pool1_cleaned_delpos_noadapters.bed"
+    bed_used_for_paper_counts: "bed_amplicon"
+
+    runs:
+      - run_id: "20241114"
+        processing_script: "other:dev/legacy/mpra_incell/trim_map_mpra.sh"   # F1 decision (Becca, 2026-10-06): "Scripts actually run" -- harness reruns the script executed for the paper run; see dev/legacy/SOURCES.md (no UMI, no dedup)
+        fastq_dir: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/20241114_pool1/fastq"
+        sample_map: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/Pool1/incell/barcodes.txt"
+        paper_bam_dir: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/Pool1/incell/prep/final_bam"
+
+    paper_counts: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/Pool1/incell/counts_delpos/BIDdetect_data_incell_delpos.txt"
+    paper_counts_raw: "/oak/stanford/groups/nicolemm/rodell/BIDamplicon/Pool1/incell/counts_delpos/BIDdetect_counts.txt"
+    # paper_site_calls:             # OPTIONAL  defaults to the copies shipped in the paper repo
+
+    chr_list: "/scratch/users/rodell/NanoModAmp_build/pool1_chr.txt"
+    samples: auto
+
+# -----------------------------------------------------------------------------
+# Build settings
+# -----------------------------------------------------------------------------
+build:
+  seed: 20261004
+  background_fraction: 0.02
+  size_cap_mb: 25
+  min_dedup_depth_after_downsample: 100
+  paper_repo_commit: ""              # OPTIONAL  "" = the agent records the current HEAD

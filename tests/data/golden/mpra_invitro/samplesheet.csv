@@ -1,0 +1,5 @@
+sample_id,fastq,treat,rep,celltype,vector,notes
+IV_PUS7_BS_1,fastq/IV_PUS7_BS_1.fastq.gz,BS,1,IV,PUS7,
+IV_PUS7_BS_2,fastq/IV_PUS7_BS_2.fastq.gz,BS,2,IV,PUS7,
+IV_noPUS_BS_2,fastq/IV_noPUS_BS_2.fastq.gz,input,2,IV,noPUS,noPUS BS labelled input (D14)
+IV_noPUS_in_1,fastq/IV_noPUS_in_1.fastq.gz,input,1,IV,noPUS,treat 'in' -> input

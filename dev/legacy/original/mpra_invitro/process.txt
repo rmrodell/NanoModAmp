@@ -1,0 +1,132 @@
+Step 1: trim_map_dedup.sh
+
+Just submit for the 6 relevant sample barcodes from invitro.
+
+May In Vitro Data:
+bash $HOME/BIDamplicon/pipeline/submit_file_prep.sh \
+    -u rodell@stanford.edu -t 4:00:00 \
+    -s /home/users/rodell/BIDamplicon/pipeline/trim_map_dedup_mpra.sh \
+    -a /scratch/users/rodell/20251106_pool1/invitro/barcodes_may.txt \
+    -i /oak/stanford/groups/nicolemm/mmontes/053025_IVpsi_pool1_enzymeTestBS/RUN1/20250530_1516_P2S-01916-B_PBC44754_1d396595/fastq_pass \
+    -o /scratch/users/rodell/20251106_pool1/invitro/maydata \
+    -r /home/groups/nicolemm/rodell/pool1/pool1_cleaned_noadapters.fasta
+
+--- Preparing SLURM Job Array Submission ---
+  CPUs per Task:    16
+  Memory per Task:  32G
+  Time Limit:       4:00:00
+  Partition:        normal
+  Notify Email:     rodell@stanford.edu
+  Pipeline Script:  /home/users/rodell/BIDamplicon/pipeline/trim_map_dedup_mpra.sh
+  Sample Map:       /scratch/users/rodell/20251106_pool1/invitro/barcodes_may.txt
+  FASTQ Source Dir: /oak/stanford/groups/nicolemm/mmontes/053025_IVpsi_pool1_enzymeTestBS/RUN1/20250530_1516_P2S-01916-B_PBC44754_1d396595/fastq_pass
+  Output Dir:       /scratch/users/rodell/20251106_pool1/invitro/maydata
+  Reference Fasta:  /home/groups/nicolemm/rodell/pool1/pool1_cleaned_noadapters.fasta
+---------------------------------------------
+SLURM output/error logs will be saved in: /scratch/users/rodell/20251106_pool1/invitro/maydata/slurm_logs
+Found 4 samples to process.
+Submitting array job...
+Submitted batch job 9257951
+--- Job array submitted successfully! ---
+
+June In Vitro Data:
+bash $HOME/BIDamplicon/pipeline/submit_file_prep.sh \
+    -u rodell@stanford.edu -t 4:00:00 \
+    -s /home/users/rodell/BIDamplicon/pipeline/trim_map_dedup_mpra.sh \
+    -a /scratch/users/rodell/20251106_pool1/invitro/barcodes_june.txt \
+    -i /oak/stanford/groups/nicolemm/mmontes/062025_IVPsi_pool1_timepointsPUS7Me/RUN1/20250620_1620_P2S-01916-A_PBE68430_76471c89/fastq_pass \
+    -o /scratch/users/rodell/20251106_pool1/invitro/junedata \
+    -r /home/groups/nicolemm/rodell/pool1/pool1_cleaned_noadapters.fasta
+
+--- Preparing SLURM Job Array Submission ---
+  CPUs per Task:    16
+  Memory per Task:  32G
+  Time Limit:       4:00:00
+  Partition:        normal
+  Notify Email:     rodell@stanford.edu
+  Pipeline Script:  /home/users/rodell/BIDamplicon/pipeline/trim_map_dedup_mpra.sh
+  Sample Map:       /scratch/users/rodell/20251106_pool1/invitro/barcodes_june.txt
+  FASTQ Source Dir: /oak/stanford/groups/nicolemm/mmontes/062025_IVPsi_pool1_timepointsPUS7Me/RUN1/20250620_1620_P2S-01916-A_PBE68430_76471c89/fastq_pass
+  Output Dir:       /scratch/users/rodell/20251106_pool1/invitro/junedata
+  Reference Fasta:  /home/groups/nicolemm/rodell/pool1/pool1_cleaned_noadapters.fasta
+---------------------------------------------
+SLURM output/error logs will be saved in: /scratch/users/rodell/20251106_pool1/invitro/junedata/slurm_logs
+Found 2 samples to process.
+Submitting array job...
+Submitted batch job 9257956
+--- Job array submitted successfully! ---
+
+All jobs took about 2 minutes to run. Amazing.
+
+Step 1b: Create folder with links to bam file so you only have to run BIDdetect once.
+
+# 1. Define the source directories containing your BAM files.
+SOURCE_DIRS=(
+    "/scratch/users/rodell/20251106_pool1/invitro/junedata/deduplicated_bam"
+    "/scratch/users/rodell/20251106_pool1/invitro/maydata/deduplicated_bam"
+)
+# 2. Define the target directory where symbolic links will be created.
+LINK_DIR="/scratch/users/rodell/20251106_pool1/invitro/bam_links"
+# 3. Loop through each source directory
+for dir in "${SOURCE_DIRS[@]}"; do
+    echo "  -> Processing directory: ${dir}"
+    # Use 'find' to locate all .bam and .bai files and link them.
+    find "$dir" -type f \( -name "*.bam" -o -name "*.bai" \) -print -exec ln -s {} "$LINK_DIR" \;
+done
+
+
+
+Step 2: BIDdetect.sh
+
+Run as an sbatch script: count.sbatch
+
+bash $HOME/BIDamplicon/pipeline/BIDdetect.sh \
+  --bam_dir /scratch/users/rodell/20251106_pool1/invitro/bam_links \
+  --output_dir /scratch/users/rodell/20251106_pool1/invitro/counts_delpos \
+  --ref_fasta /home/groups/nicolemm/rodell/pool1/pool1_cleaned_noadapters.fasta \
+  --bed_file /home/groups/nicolemm/rodell/pool1/pool1_cleaned_delpos_noadapters.bed \
+  --col_names 'celltype_vector_treat_rep'
+
+bash $HOME/BIDamplicon/pipeline/BIDdetect.sh \
+  --bam_dir /scratch/users/rodell/20251106_pool1/invitro/bam_links \
+  --output_dir /scratch/users/rodell/20251106_pool1/invitro/counts_full \
+  --ref_fasta /home/groups/nicolemm/rodell/pool1/pool1_cleaned_noadapters.fasta \
+  --bed_file /home/groups/nicolemm/rodell/pool1/pool1_cleaned_full_noadapters.bed \
+  --col_names 'celltype_vector_treat_rep'
+
+Submitted batch job 9275304
+
+ISSUE: counts_full failed
+
+--- Processing sample: IV_noPUS_BS_2 ---
+Running R script to generate counts...
+[1] "Checking for required packages..."
+[1] "Initializing packages..."
+[1] "Script is running in the following directory: /scratch/users/rodell/20251106_pool1/invitro"
+[1] "------------------------------------"
+[1] "Loading input files..."
+[1] "------------------------------------"
+[1] "Data Preparation and Processing..."
+[1] "Starting counting at 2025-11-07 14:37:13"
+There were 50 or more warnings (use warnings() to see the first 50)
+[1] "Finished counting at 2025-11-07 14:38:47"
+[1] "Finalizing output..."
+[1] "No valid positions meeting criteria were found. Output file is empty."
+[1] "Script finished."
+Appending results to master count file...
+awk: fatal: cannot open file `/scratch/users/rodell/20251106_pool1/invitro/counts_full/intermediate_counts/IV_noPUS_BS_2_counts.txt' for reading (No such file or directory)
+
+Submitted batch job 9287680 --> full length
+
+Step 3: analysis
+
+Rscript $HOME/BIDamplicon/pipeline/modification_analysis.R \
+  --input /scratch/users/rodell/20251106_pool1/invitro/counts_delpos/BIDdetect_data_invitro_delpos.txt \
+  --outdir /scratch/users/rodell/20251106_pool1/invitro/analysis_delpos \
+  --prefix invitro_delpos \
+  --plot_all_sites
+
+Rscript $HOME/BIDamplicon/pipeline/modification_analysis.R \
+  --input /scratch/users/rodell/20251106_pool1/invitro/counts_full/BIDdetect_data_invitro_full.txt \
+  --outdir /scratch/users/rodell/20251106_pool1/invitro/analysis_full \
+  --prefix invitro_full --color "#a2a2fc"
