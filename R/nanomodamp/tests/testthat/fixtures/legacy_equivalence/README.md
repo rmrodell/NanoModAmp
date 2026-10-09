@@ -24,3 +24,8 @@ Findings while building these fixtures:
   as `p_adjust = "legacy"` (default) and offers `p_adjust = "BH"`.
 - readr writes subnormal doubles with a wrong exponent (e.g. 6.5187e-315 is written as
   `6.5187e-298`, PFKP_chr10_3112271 in `WT_mod_HepG2`); the test treats p < 1e-290 as equal.
+- **Paper vs rerun drift (in cellulo WT_mod_Both):** rerunning the unchanged legacy script today
+  reproduces the shipped categories at 759 of 760 sites; RPL22_chr1_6186768 is Inconclusive in the
+  paper and Unmodified in the rerun (p 1.4e-5 vs 3.0e-22). 23 of 341 tested p-values differ by more
+  than 1e-3 relative. The PUS7 union is identical (184 sites). The port equals the rerun exactly, so
+  the drift comes from the original run's package versions / optimizer, not from the port.

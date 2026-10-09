@@ -107,9 +107,14 @@ test_that("11b: in-cellulo WT_mod treatment tests equal incell_analysis.R", {
     expect_same_num(m$p.value, m$p.value.ref, paste(cond, "p.value"))
     expect_same_num(m$p.adjust_diff, m$p.adjust_diff.ref, paste(cond, "p.adjust_diff"))
     if (cond == "Both" && full_run()) {
+      # Paper vs today's rerun of the same legacy code: one site changes category because the
+      # original fit differed (p 1.4e-5 vs 3.0e-22; package/optimizer drift, not the port).
+      paper_drift <- "RPL22_chr1_6186768:Inconclusive>Unmodified"
       shipped <- read_fx("shipped", "WT_mod_Both_significance.tsv")
       mm <- dplyr::inner_join(r, shipped, by = c("chr", "pos"), suffix = c("", ".paper"))
-      expect_identical(mm$category, mm$category.paper)
+      expect_equal(nrow(mm), nrow(shipped))
+      diff <- mm[mm$category != mm$category.paper, ]
+      expect_setequal(paste0(diff$chr, ":", diff$category.paper, ">", diff$category), paper_drift)
     }
   }
 })

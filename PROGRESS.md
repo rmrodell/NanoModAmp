@@ -35,9 +35,14 @@ rerun unchanged (R 4.3.2) on the shipped Figure 3 count tables
 - In vitro, all 770 sites: identical order, categories and TOST labels; p-values max relative
   difference 5.9e-15; deltas/eqbounds ≤ 4e-16. Shipped paper table: same categories (p within 3e-4
   relative: it came from slightly different script/package versions).
-- In cellulo WT_mod (HepG2, 293T, Both) and all six PUS7_dep runs + union: identical on the
-  default deterministic subset (60 sites) — see the full-run line below. One p-value
-  (PFKP_chr10_3112271, 6.5e-315) is a readr serialization artifact of subnormal doubles.
+- In cellulo WT_mod (HepG2, 293T, Both) and all six PUS7_dep runs + union: identical to the
+  legacy rerun on **all 760 sites** (full run, `NANOMODAMP_FULL_EQUIVALENCE=true`, 34 min on one
+  shared CPU) and on the default 60-site subset (≈3 min). One p-value (PFKP_chr10_3112271,
+  6.5e-315) is a readr serialization artifact of subnormal doubles.
+- Paper (shipped) vs legacy rerun: PUS7 union identical (184 sites); WT_mod_Both categories
+  identical except RPL22_chr1_6186768 (paper Inconclusive, rerun Unmodified; p 1.4e-5 vs 3.0e-22),
+  i.e. drift between the original run and today's packages, not a porting difference. Documented
+  in the fixture README and allowed explicitly in the test.
 - `bin/nma_call.R` on the in vitro table reproduces the legacy table exactly.
 
 **Open for Becca / Orchestrator**
