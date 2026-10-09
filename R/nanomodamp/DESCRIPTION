@@ -1,0 +1,29 @@
+Package: nanomodamp
+Type: Package
+Title: Counting, Merging and Site Calling for Nano-BID-Amp Data
+Version: 0.1.0
+Authors@R: c(
+    person("Becca", "Rodell", email = "rodell@stanford.edu", role = c("aut", "cre")))
+Description: Per-site base, deletion and insertion counts from amplicon BAMs
+    (ported from the PUS7regulation2026 Figure 2/3 counting code), name-based
+    merging of per-sample count tables, and background deletion QC. Used by the
+    NanoModAmp Nextflow pipeline through the CLIs in bin/.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Depends: R (>= 4.2)
+Imports:
+    data.table,
+    GenomicRanges,
+    IRanges,
+    Rsamtools,
+    Biostrings,
+    S4Vectors,
+    GenomeInfoDb,
+    future,
+    future.apply,
+    ggplot2,
+    stats,
+    utils
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
