@@ -7,10 +7,10 @@ site calling (WP4).
 
 ```yaml
 analyses:
-  - name: incellulo                 # treatment analysis
+  - name: incellulo               # treatment analysis: modified in WT cells (paper WT_mod_Both)
     type: treatment
-    subset: {celltype: [HepG2, 293T]}      # optional; column -> allowed values
-    random_effects: ""            # extra terms appended to "delrate ~ treat + (1|rep)"
+    subset: {celltype: [HepG2, 293T], vector: [WT, P102, P4]}   # optional; column -> allowed values
+    random_effects: "(1|vector) + (1|celltype)"   # extra terms appended to "delrate ~ treat + (1|rep)"
     sesoi: 0.05
     fdr: 0.05
     plot_all_sites: true

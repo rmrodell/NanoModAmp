@@ -4,21 +4,21 @@ Plan: [plan.md](plan.md) · Decisions: [docs/DECISIONS.md](docs/DECISIONS.md) ·
 
 | WP | Branch | Status | Notes |
 |---|---|---|---|
-| WP0 Scaffold and contracts | `wp/0-scaffold` | **Ready for G0 review** | nf-core template (tools 4.1.0), all §3 params incl. D29/D31, schemas, contracts, stubbed processes; `-profile test -stub` passes on Nextflow 25.04.7 in all three preprocessing modes and counting-only; validation errors checked; `nf-core pipelines lint` 0 failures (documented ignores in `.nf-core.yml`); CI in `.github/workflows/ci.yml` (nf-test not run locally: not installed on Sherlock) |
-| WP1 Simulator | `wp/1-simulator` (local, not pushed) | **Done, pending CI** | `tests/simulate/simulate.py` + `design.yaml`; `tests/data/synthetic/` (1.2 MB): `endogenous`, `mpra`, `legacy_pool_noumi` (D29), `legacy_3prime` (D31) with truth tables; pytest 41 passed on Sherlock incl. minimap2 2.28 mapping checks; WP0 stub pipeline runs all four params files (`-profile test -stub`) |
-| WP2 Preprocessing | `wp/2-preprocess` (local, not pushed) | **Implemented; CI not yet run** | Real modules (nf-core cutadapt 5.2, seqtk 1.4, umi_tools, minimap2 + samtools 1.24, umicollapse 1.1.0; local CAT_FASTQ, MERGE_ORIENT, READ_FUNNEL); all three modes (D29, D31) verified on Sherlock with Apptainer on hand-made fixtures; nf-test specs for tests 1–11, 13, 14 written (not run: nf-test not installed on Sherlock). See "WP2 — remaining" |
-| WP3 Counting | `wp/3-count` (local, not pushed) | **Implemented; local tests pass** | R package `R/nanomodamp` (`count_sites`, `merge_counts`, `merge_count_tables` (D32), `background_qc`), CLIs `bin/nma_count.R`, `nma_merge.R`, `nma_bgqc.R`, modules wired (stubs kept). 23 testthat tests pass on R 4.3.2 / Bioc 3.18, incl. exact equivalence with the legacy `bam_counts_fast.R` on a fixture BAM. On golden V2 BAMs with the 0-based `targets.bed` (`bed0`), counts are identical to `expected/legacy_rerun` for in vitro 4/4, in cellulo 32/32, endogenous 20251022 16/16. See "WP3 — remaining". |
-| WP4 Site calling | `wp/4-calling` (local, not pushed) | **Implemented; testthat 1–11 pass locally** | `R/nanomodamp` calling/sitesets/plots/run; `bin/nma_call.R`, `bin/nma_sitesets.R`; CALL_SITES / SITE_SETS modules call them (stub run passes); `assets/analyses_example.yaml` + `assets/analyses/{invitro,incellulo,endogenous}.yaml`. Test 11: exact equivalence with the legacy scripts rerun on the shipped Figure 3 tables (see below). R-30 **APPROVED** 2026-10-09: default `p_adjust: BH`, `legacy` reproduces the paper |
-| WP5 Golden package | `wp/5-golden-package` (local, not pushed) | In progress | Harnesses, selection, L1/V1/V2 and published rerun running on Sherlock; see `docs/plans/golden_test_package_plan.md` |
+| WP0 Scaffold and contracts | `wp/0-scaffold` | **Done — G0 approved 2026-10-09** | nf-core template, schemas, contracts, CI; merged into `dev` |
+| WP1 Simulator | `wp/1-simulator` | **Merged into `dev`** | `tests/simulate/`, `tests/data/synthetic/` (1.2 MB); pytest 41 passed on Sherlock |
+| WP2 Preprocessing | `wp/2-preprocess` | **Merged into `dev`; CI pending** | Real modules, all modes verified on Sherlock (Apptainer); nf-test specs first run in CI. See "WP2 — remaining" |
+| WP3 Counting | `wp/3-count` | **Merged into `dev`** | `R/nanomodamp` counting/merge/bg-QC, R-31 fresh `.fai`; 24 testthat tests; golden counts identical to `legacy_rerun`. See "WP3 — remaining" |
+| WP4 Site calling | `wp/4-calling` | **Merged into `dev`** | Treatment/factor tests, site sets, plots; test 11 exact vs paper scripts (in vitro 770, in cellulo 760 sites); R-30 BH default. See "WP4 — remaining" |
+| WP5 Golden package | `wp/5-golden-package` | **Merged into `dev`** | `tests/data/golden/` (22.3 MB); L1, L2, V1, V2, Repro pass; build log `dev/golden/BUILD_LOG.md` |
 | WP6 Documentation | — | Started in WP0 | `docs/usage.md` legacy-library section, `docs/methods.md` stub |
 | WP7 Integration | — | Blocked on WP1–WP6 | Compares against `legacy_rerun`, `published_rerun`, `paper_reference` (D30) |
 | WP8 Release | — | Blocked | |
 
 ## Blockers
 
-- None for WP0. WP1–WP6 wait for G0 (contracts frozen).
+- G0 approved 2026-10-09 (Becca); contracts are frozen — changes go through `docs/contracts/CHANGELOG.md`.
 
-## Open questions (for G0)
+## Open questions (raised for G0; G0 approved 2026-10-09)
 
 1. **Nextflow minimum version.** The nf-core 4.1.0 template requires Nextflow ≥ 25.10.4; Sherlock's newest module is 25.04.7. WP0 relaxed the pin to `>=25.04.7` and verified the stub runs there. Keep 25.04.7 as the minimum, or require 25.10 (then Sherlock users need their own Nextflow install)?
 2. ~~`bed_coordinates` default~~ — **decided 2026-10-06 (G1-e, D27/R-15):** default `bed0`; `one_based_start` for legacy BEDs; start = end rows under `bed0` fail validation.

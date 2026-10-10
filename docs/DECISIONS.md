@@ -63,3 +63,5 @@ Every decision with its date and approver (plan §0 rule 5). Golden-package deci
 | 2026-10-09 | D33 | Endogenous random effects: replicate `(1|rep)` (always in the model) plus `(1|celltype)` for analyses combining both cell types. | Becca |
 | 2026-10-09 | R-31 | The pipeline always rebuilds the FASTA index instead of trusting an existing `.fai`; counting errors on a `.fai` that does not match its FASTA. | Becca |
 | 2026-10-09 | R-30 | Multiple testing: default `p_adjust = BH` (across all tested sites per analysis, plan §6.3 step 5 / §6.4 step 3); `legacy` (per-site no-op) remains available and reproduces the paper tables. | Becca |
+| 2026-10-09 | G0 | Contracts (§5), parameters (§3) and analyses format approved, including the 2026-10-09 analyses edits and `p_adjust`. | Becca |
+| 2026-10-09 | §5.4 | The in-cellulo treatment example matches the paper's WT analysis (WT vectors, `(1|vector) + (1|celltype)`); shipped analyses configs already did. | Becca |
