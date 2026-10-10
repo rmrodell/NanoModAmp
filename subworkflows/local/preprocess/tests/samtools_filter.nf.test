@@ -1,0 +1,32 @@
+// WP2 test 7: secondary, supplementary and MAPQ < 30 records are removed; MAPQ = 30 is kept.
+nextflow_process {
+
+    name "Test samtools view filters (-F 2304, -q 30)"
+    script "../../../../modules/nf-core/samtools/view/main.nf"
+    process "SAMTOOLS_VIEW"
+    config "./samtools_filter.config"
+    tag "preprocess"
+    tag "samtools"
+
+    test("test 7: filter keeps primary records with MAPQ >= 30") {
+        when {
+            process {
+                """
+                input[0] = [[id: 'filter_test'], file("${projectDir}/tests/fixtures/preprocess/filter_test.sam", checkIfExists: true), []]
+                input[1] = [[], [], []]
+                input[2] = [[], []]
+                input[3] = [[], []]
+                input[4] = ''
+                """
+            }
+        }
+        then {
+            def kept = new File(process.out.sam[0][1].toString()).readLines().findAll { l -> !l.startsWith('@') }.collect { l -> l.split('\t')[0] }.sort()
+            def exp  = new groovy.json.JsonSlurper().parse(new File("${baseDir}/tests/fixtures/preprocess/expected.json"))
+            assertAll(
+                { assert process.success },
+                { assert kept == exp.filter_test_kept }
+            )
+        }
+    }
+}

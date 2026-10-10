@@ -1,0 +1,156 @@
+// WP2 tests for the PREPROCESS subworkflow (plan §7 WP2, tests 1–8, 10, 11, 13, 14) on the
+// hand-made fixtures in tests/fixtures/preprocess (expected.json holds the truth).
+// The same checks run locally without nf-test: tests/fixtures/preprocess/check_outputs.py.
+nextflow_workflow {
+
+    name "Test subworkflow PREPROCESS"
+    script "../main.nf"
+    workflow "PREPROCESS"
+    tag "subworkflows"
+    tag "preprocess"
+
+    // helpers (plain Java I/O so they work from any closure) --------------------------------
+    def expected = { dir -> new groovy.json.JsonSlurper().parse(new File("${dir}/tests/fixtures/preprocess/expected.json")) }
+    def entry    = { ch, id -> ch.find { e -> e[0].id == id } }
+    def funnel   = { f -> new File(f.toString()).readLines().drop(1).collectEntries { l -> def c = l.split('\t'); [(c[1]): c[3] as Integer] } }
+    def reads    = { f ->
+        def l = new java.util.zip.GZIPInputStream(new FileInputStream(f.toString())).getText('UTF-8').readLines()
+        (0..<l.size()).step(4).collectEntries { i -> [(l[i].substring(1).split(' ')[0]): l[i + 1]] }
+    }
+
+    test("defaults (ont, linked, umi), mpra: trimming, RC twin, UMI, dedup, funnel, directory input") {
+        when {
+            params {
+                library_type = 'mpra'
+            }
+            workflow {
+                """
+                input[0] = channel.of(
+                    [[id: 'mpra_ont'], file("${projectDir}/tests/fixtures/preprocess/fastq/mpra_ont.fastq.gz", checkIfExists: true)],
+                    [[id: 'S_dir'],    file("${projectDir}/tests/fixtures/preprocess/fastq/S_dir", type: 'dir', checkIfExists: true)]
+                )
+                input[1] = channel.value(file("${projectDir}/tests/fixtures/preprocess/ref.fa", checkIfExists: true))
+                input[2] = '-ax sr'
+                """
+            }
+        }
+        then {
+            def exp = expected(baseDir)
+            def f   = funnel(entry(workflow.out.funnel, 'mpra_ont')[1])
+            def r   = reads(entry(workflow.out.reads, 'mpra_ont')[1])
+            def o1  = exp.inserts.O1
+            assertAll(
+                { assert workflow.success },
+                // tests 10, 11: funnel steps in order and record counts (fixture truth; 'mapped' includes secondary records)
+                { assert f.keySet().toList() == ['raw', 'trim1_sense', 'trim1_antisense', 'antisense_rc', 'merged',
+                                                 'umi_extracted', 'trim2_pool', 'mapped', 'primary', 'mapq_filtered', 'dedup'] },
+                { assert f.findAll { k, _v -> k != 'mapped' } == exp.funnel.mpra_ont },
+                { assert f.mapped >= f.primary },
+                // test 1: a sense read is trimmed to exactly the insert
+                { assert r.findAll { k, _v -> k.startsWith('sense_u2_') }.values().toList() == [o1] },
+                // test 2: an antisense read is identical to its sense twin after RC
+                { assert r.findAll { k, _v -> k.startsWith('antisense_u3_') }.values().toList() == [o1] },
+                // tests 3, 4: reads with one adapter, and too-short reads, are discarded (D4)
+                { assert !r.keySet().any { k -> k.startsWith('only_') || k.startsWith('too_short') } },
+                // test 5: the UMI is appended to the read name with '_'
+                { assert r.containsKey("sense_u2_${exp.umis.u2}".toString()) },
+                // test 6: duplicates and the 1-edit UMI copy collapse; distinct UMIs are kept
+                { assert f.dedup == 5 },
+                // reads found in both orientations are counted
+                { assert new File(entry(workflow.out.both_orientations, 'mpra_ont')[1].toString()).readLines()[1].split('\t')[1] == '1' },
+                // test 8: a directory input is concatenated in lexical order
+                { assert reads(entry(workflow.out.reads, 'S_dir')[1]).keySet().collect { k -> k.split('_')[0..1].join('_') } == exp.dir_order }
+            )
+        }
+    }
+
+    test("defaults, endogenous: no pool trim; insert after trimming and UMI extraction") {
+        when {
+            params {
+                library_type = 'endogenous'
+            }
+            workflow {
+                """
+                input[0] = channel.of([[id: 'endo_ont'], file("${projectDir}/tests/fixtures/preprocess/fastq/endo_ont.fastq.gz", checkIfExists: true)])
+                input[1] = channel.value(file("${projectDir}/tests/fixtures/preprocess/ref.fa", checkIfExists: true))
+                input[2] = '-ax splice -uf'
+                """
+            }
+        }
+        then {
+            def exp = expected(baseDir)
+            def f   = funnel(workflow.out.funnel[0][1])
+            def r   = reads(workflow.out.reads[0][1])
+            assertAll(
+                { assert workflow.success },
+                { assert !f.containsKey('trim2_pool') },
+                { assert f.findAll { k, _v -> k != 'mapped' } == exp.funnel.endo_ont },
+                { assert r["e_u2_${exp.umis.uE2}".toString()] == exp.inserts.E1_INS }
+            )
+        }
+    }
+
+    test("orientation_adapters = pool, umi = false (D29, opt-in): no UMI step, no dedup") {
+        when {
+            params {
+                library_type         = 'mpra'
+                orientation_adapters = 'pool'
+                umi                  = false
+            }
+            workflow {
+                """
+                input[0] = channel.of([[id: 'mpra_pool'], file("${projectDir}/tests/fixtures/preprocess/fastq/mpra_pool.fastq.gz", checkIfExists: true)])
+                input[1] = channel.value(file("${projectDir}/tests/fixtures/preprocess/ref.fa", checkIfExists: true))
+                input[2] = '-ax sr'
+                """
+            }
+        }
+        then {
+            def exp = expected(baseDir)
+            def f   = funnel(workflow.out.funnel[0][1])
+            def r   = reads(workflow.out.reads[0][1])
+            assertAll(
+                { assert workflow.success },
+                // test 13: funnel omits umi_extracted, trim2_pool and dedup
+                { assert f.keySet().toList() == ['raw', 'trim1_sense', 'trim1_antisense', 'antisense_rc', 'merged',
+                                                 'mapped', 'primary', 'mapq_filtered'] },
+                { assert f.findAll { k, _v -> k != 'mapped' } == exp.funnel.mpra_pool },
+                // pool-flanked reads without ONT adapters or UMI are kept, oriented and trimmed to the oligo
+                { assert r.keySet().sort() == ['p_antisense', 'p_sense1', 'p_sense2'] },
+                { assert r.values().every { s -> s == exp.inserts.O1 } },
+                { assert workflow.out.bam_bai.size() == 1 }
+            )
+        }
+    }
+
+    test("ont_adapter_mode = three_prime_only (D31, opt-in): legacy 3′-only trim") {
+        when {
+            params {
+                library_type     = 'endogenous'
+                ont_adapter_mode = 'three_prime_only'
+            }
+            workflow {
+                """
+                input[0] = channel.of([[id: 'endo_3prime'], file("${projectDir}/tests/fixtures/preprocess/fastq/endo_3prime.fastq.gz", checkIfExists: true)])
+                input[1] = channel.value(file("${projectDir}/tests/fixtures/preprocess/ref.fa", checkIfExists: true))
+                input[2] = '-ax splice -uf'
+                """
+            }
+        }
+        then {
+            def exp = expected(baseDir)
+            def f   = funnel(workflow.out.funnel[0][1])
+            def r   = reads(workflow.out.reads[0][1])
+            assertAll(
+                { assert workflow.success },
+                // test 14: trim1_3prime replaces the sense/antisense steps; no reads-in-both-orientations table
+                { assert f.keySet().toList() == ['raw', 'trim1_3prime', 'umi_extracted', 'mapped', 'primary', 'mapq_filtered', 'dedup'] },
+                { assert f.findAll { k, _v -> k != 'mapped' } == exp.funnel.endo_3prime },
+                { assert workflow.out.both_orientations.size() == 0 },
+                // 3′-only and adapter-less reads kept (untrimmed reads kept), the short read dropped
+                { assert r.keySet().collect { k -> k.substring(0, k.lastIndexOf('_')) }.sort() == ['t_3p_u1', 't_3p_u2', 't_no_adapter'] },
+                { assert r["t_3p_u1_${exp.umis.uE1}".toString()] == exp.inserts.E1_INS }
+            )
+        }
+    }
+}
