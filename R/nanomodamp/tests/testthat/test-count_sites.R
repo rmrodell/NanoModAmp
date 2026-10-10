@@ -136,3 +136,19 @@ test_that("R-16: reaching max_depth is reported", {
   expect_true(19L %in% res$saturated$pos)
   expect_equal(nrow(count_sites(f$bam, f$fa, write_bed(f$dir, bed_row(18, 19)))$saturated), 0)
 })
+
+test_that("R-31: a stale .fai (same names and lengths, wrong offsets) is rejected; a fresh one is used", {
+  d <- tempfile("nmastale"); dir.create(d)
+  fa <- file.path(d, "ref.fa")
+  # index a CRLF version, then rewrite the FASTA with LF line endings, keeping the old index
+  writeBin(charToRaw(paste0(">amp1\r\n", REF_SEQ, "\r\n")), fa)
+  Rsamtools::indexFa(fa)
+  writeLines(c(">amp1", REF_SEQ), fa)
+  stale <- read.delim(paste0(fa, ".fai"), header = FALSE)
+  expect_identical(stale$V2, REF_LEN)                      # names and lengths still match
+  bam <- make_bam(d, standard_reads())
+  bed <- write_bed(d, bed_row(18, 19))
+  expect_error(count_sites(bam, fa, bed), "stale")
+  Rsamtools::indexFa(fa)                                   # what SAMTOOLS_FAIDX does in the pipeline
+  expect_identical(count_sites(bam, fa, bed)$counts$Deletion.count, 10L)
+})

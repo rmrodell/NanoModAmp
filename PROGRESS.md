@@ -32,4 +32,4 @@ Plan: [plan.md](plan.md) · Decisions: [docs/DECISIONS.md](docs/DECISIONS.md) ·
 - **CI:** the R testthat job (`devtools::test`) has not run yet (branch not pushed). Locally the suite was run with `testthat::test_dir()` on an installed package.
 - **nf-test:** no module-level nf-test for COUNT/MERGE yet (nf-test not installed on Sherlock); a real `--input_counts` run through Nextflow was checked by hand (merge correct; MULTIQC failed only because multiqc isn't installed locally).
 - **Golden 20250418:** not compared with `count_sites()` here — its legacy counts came from the older `bam_counts.R` on pre-dedup BAMs; WP7 covers it.
-- **Note for WP2/WP7:** a stale `.fai` next to `--fasta` is used as is (the pipeline only builds a missing one); the paper's pool1 `.fai` is stale. Consider always rebuilding or validating the `.fai`.
+- ~~Stale `.fai` used as is~~ — fixed (R-31, 2026-10-09): SAMTOOLS_FAIDX always rebuilds the index on a copy of `--fasta`; `check_fai()` in counting rejects a mismatched index.

@@ -43,6 +43,33 @@ read_bed_regions <- function(bed, bed_coordinates = c("bed0", "one_based_start")
   b[, .(chr, start, end, gene, strand, bed_start, bed_end)]
 }
 
+#' Check that `<fasta>.fai` matches the FASTA it sits next to (R-31).
+#'
+#' Rebuilds the index on a temporary link to the FASTA and compares all five columns (name,
+#' length, offset, line bases, line bytes). A stale index can keep names and lengths but carry
+#' wrong offsets (e.g. after a CRLF -> LF rewrite), which makes Rsamtools read wrong bases.
+#' Compressed FASTAs are not checked (the pipeline always passes a decompressed copy).
+#' @return TRUE invisibly; stops with an explanation on any mismatch or a missing index.
+check_fai <- function(fasta) {
+  if (grepl("\\.gz$", fasta)) return(invisible(TRUE))
+  fai <- paste0(fasta, ".fai")
+  if (!file.exists(fai)) stop("no FASTA index ", fai, call. = FALSE)
+  d <- tempfile("nmafai"); dir.create(d); on.exit(unlink(d, recursive = TRUE), add = TRUE)
+  link <- file.path(d, "ref.fa")
+  if (!file.symlink(normalizePath(fasta), link)) file.copy(fasta, link)
+  Rsamtools::indexFa(link)
+  read_fai <- function(f) utils::read.delim(f, header = FALSE, colClasses = c("character", rep("numeric", 4)))
+  got <- read_fai(fai); want <- read_fai(paste0(link, ".fai"))
+  what <- if (!identical(got[[1]], want[[1]])) "sequence names" else if (!identical(got[[2]], want[[2]]))
+    "sequence lengths" else if (!identical(got[3:5], want[3:5])) "offsets/line lengths" else NULL
+  if (!is.null(what)) {
+    stop(sprintf(paste0("FASTA index %s does not match %s (%s differ): the index is stale. ",
+                        "Rebuild it with `samtools faidx %s` (the pipeline always rebuilds it, R-31)."),
+                 fai, fasta, what, fasta), call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
 # One region, as process_region() in bam_counts_fast.R.
 count_region <- function(region, fasta_handle, bam_handle, all_bases, pileup_params, max_depth) {
   region_gr <- GRanges(seqnames = region$chr,
@@ -110,6 +137,7 @@ count_sites <- function(bam, fasta, bed, bed_coordinates = "bed0", min_coverage 
                         max_depth = 200000L, min_mapq = 1L, min_base_quality = 1L,
                         count_all_bases = FALSE, threads = 1L, allow_region_failures = FALSE) {
   regions <- if (is.character(bed)) read_bed_regions(bed, bed_coordinates) else as.data.table(bed)
+  check_fai(fasta)
   fasta_handle <- FaFile(fasta)
   bam_handle <- BamFile(bam)
   pp <- PileupParam(max_depth = as.integer(max_depth), min_mapq = as.integer(min_mapq),
