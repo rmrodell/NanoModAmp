@@ -8,7 +8,7 @@ Plan: [plan.md](plan.md) · Decisions: [docs/DECISIONS.md](docs/DECISIONS.md) ·
 | WP1 Simulator | `wp/1-simulator` (local, not pushed) | **Done, pending CI** | `tests/simulate/simulate.py` + `design.yaml`; `tests/data/synthetic/` (1.2 MB): `endogenous`, `mpra`, `legacy_pool_noumi` (D29), `legacy_3prime` (D31) with truth tables; pytest 41 passed on Sherlock incl. minimap2 2.28 mapping checks; WP0 stub pipeline runs all four params files (`-profile test -stub`) |
 | WP2 Preprocessing | `wp/2-preprocess` (local, not pushed) | **Implemented; CI not yet run** | Real modules (nf-core cutadapt 5.2, seqtk 1.4, umi_tools, minimap2 + samtools 1.24, umicollapse 1.1.0; local CAT_FASTQ, MERGE_ORIENT, READ_FUNNEL); all three modes (D29, D31) verified on Sherlock with Apptainer on hand-made fixtures; nf-test specs for tests 1–11, 13, 14 written (not run: nf-test not installed on Sherlock). See "WP2 — remaining" |
 | WP3 Counting | `wp/3-count` (local, not pushed) | **Implemented; local tests pass** | R package `R/nanomodamp` (`count_sites`, `merge_counts`, `merge_count_tables` (D32), `background_qc`), CLIs `bin/nma_count.R`, `nma_merge.R`, `nma_bgqc.R`, modules wired (stubs kept). 23 testthat tests pass on R 4.3.2 / Bioc 3.18, incl. exact equivalence with the legacy `bam_counts_fast.R` on a fixture BAM. On golden V2 BAMs with the 0-based `targets.bed` (`bed0`), counts are identical to `expected/legacy_rerun` for in vitro 4/4, in cellulo 32/32, endogenous 20251022 16/16. See "WP3 — remaining". |
-| WP4 Site calling | — | Not started | Test 11 (legacy equivalence on shipped Figure 3 tables) is independent of WP5 |
+| WP4 Site calling | `wp/4-calling` (local, not pushed) | **Implemented; testthat 1–11 pass locally** | `R/nanomodamp` calling/sitesets/plots/run; `bin/nma_call.R`, `bin/nma_sitesets.R`; CALL_SITES / SITE_SETS modules call them (stub run passes); `assets/analyses_example.yaml` + `assets/analyses/{invitro,incellulo,endogenous}.yaml`. Test 11: exact equivalence with the legacy scripts rerun on the shipped Figure 3 tables (see below). R-30 **APPROVED** 2026-10-09: default `p_adjust: BH`, `legacy` reproduces the paper |
 | WP5 Golden package | `wp/5-golden-package` (local, not pushed) | In progress | Harnesses, selection, L1/V1/V2 and published rerun running on Sherlock; see `docs/plans/golden_test_package_plan.md` |
 | WP6 Documentation | — | Started in WP0 | `docs/usage.md` legacy-library section, `docs/methods.md` stub |
 | WP7 Integration | — | Blocked on WP1–WP6 | Compares against `legacy_rerun`, `published_rerun`, `paper_reference` (D30) |
@@ -42,3 +42,34 @@ Plan: [plan.md](plan.md) · Decisions: [docs/DECISIONS.md](docs/DECISIONS.md) ·
 - **Observation for WP7 (R-04):** on the fixtures, reads carrying only one ONT adapter are discarded both by cutadapt 5.2 with `;required` and by legacy cutadapt 1.18 linked `-g` with `--discard-untrimmed`; the R-04 difference will have to be measured on real data (golden package).
 - **Lint:** `nextflow lint` passes on all new files; `nf-core pipelines lint` did not finish locally (stalled after generating container configs, 15 min timeout) — CI runs it.
 - **Fixture observation:** the chimera fixture (sense + antisense construct in one read) puts 1 of 9 merged reads in both orientations, so MERGE_ORIENT logs the > 0.1% warning there by design.
+## WP4 — status and remaining (2026-10-09)
+**Test 11 (legacy equivalence)** — references are `modification_analysis.R` / `incell_analysis.R`
+rerun unchanged (R 4.3.2) on the shipped Figure 3 count tables
+(`R/nanomodamp/tests/testthat/fixtures/legacy_equivalence/`):
+- In vitro, all 770 sites: identical order, categories and TOST labels; p-values max relative
+  difference 5.9e-15; deltas/eqbounds ≤ 4e-16. Shipped paper table: same categories (p within 3e-4
+  relative: it came from slightly different script/package versions).
+- In cellulo WT_mod (HepG2, 293T, Both) and all six PUS7_dep runs + union: identical to the
+  legacy rerun on **all 760 sites** (full run, `NANOMODAMP_FULL_EQUIVALENCE=true`, 34 min on one
+  shared CPU) and on the default 60-site subset (≈3 min). One p-value (PFKP_chr10_3112271,
+  6.5e-315) is a readr serialization artifact of subnormal doubles.
+- Paper (shipped) vs legacy rerun: PUS7 union identical (184 sites); WT_mod_Both categories
+  identical except RPL22_chr1_6186768 (paper Inconclusive, rerun Unmodified; p 1.4e-5 vs 3.0e-22),
+  i.e. drift between the original run and today's packages, not a porting difference. Documented
+  in the fixture README and allowed explicitly in the test.
+- `bin/nma_call.R` on the in vitro table reproduces the legacy table exactly.
+**Open for Becca / Orchestrator**
+1. ~~R-30~~ — decided by Becca 2026-10-09: default `p_adjust: BH` (schema key added, contract CHANGELOG updated); `legacy` reproduces the paper (used by test 11).
+2. Treatment table appends `p.value`, `is_equivalent`, `all_below_thresh` (contract §5.5 lists
+   `p.value`, `is_equivalent`, `model_status` as allowed appends); model failures stay in
+   `equivalence_status` as in the legacy code. Orchestrator: accept `all_below_thresh` or drop it.
+3. In-cellulo legacy script labels equivalence `Equivalent`/`Not equivalent`; the port uses the
+   detailed `modification_analysis.R` labels everywhere (plan §6.3); categories are unaffected.
+**WP4 — remaining**
+- Container: CALL_SITES / SITE_SETS still use the placeholder image; needs the `nanomodamp-r`
+  image (R ≥ 4.3 + nanomodamp + blme/lme4/car/furrr/ggplot2/forcats/yaml/argparse), shared with WP3.
+- CI: run testthat with `NANOMODAMP_FULL_EQUIVALENCE=true` in a dedicated job (~1 h on one CPU;
+  parallel workers do not change results).
+- Merge with WP3: both branches add `R/nanomodamp/DESCRIPTION` and `NAMESPACE`; resolve by taking
+  the union of Imports and export()/import lines.
+- nf-test for CALL_SITES / SITE_SETS with real (non-stub) runs once the container exists.

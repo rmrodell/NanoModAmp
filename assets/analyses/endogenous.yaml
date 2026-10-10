@@ -1,0 +1,42 @@
+# Figure 2 endogenous under the Figure 3 method (D13, R-21, R-22), on counts merged across runs
+# (D32). Random effects (D33): (1|rep) is always in the model; (1|celltype) is added when both cell
+# types are analysed together. Vector labels are WT / KD (P36, pLKO -> WT; P97, shPUS7 -> KD).
+analyses:
+  - name: WT_mod_HepG2
+    type: treatment
+    subset: {celltype: [HepG2], vector: [WT]}
+    random_effects: ""
+  - name: WT_mod_293T
+    type: treatment
+    subset: {celltype: [293T], vector: [WT]}
+    random_effects: ""
+  - name: WT_mod_Both
+    type: treatment
+    subset: {celltype: [HepG2, 293T], vector: [WT]}
+    random_effects: "(1|celltype)"
+  - name: PUS7_dep_HepG2_WT_v_KD
+    type: factor
+    subset: {celltype: [HepG2], vector: [KD, WT]}
+    factor: vector
+    levels: [KD, WT]
+    random_effects: ""
+    direction: positive
+  - name: PUS7_dep_293T_WT_v_KD
+    type: factor
+    subset: {celltype: [293T], vector: [KD, WT]}
+    factor: vector
+    levels: [KD, WT]
+    random_effects: ""
+    direction: positive
+  - name: PUS7_dep_Both_WT_v_KD
+    type: factor
+    subset: {celltype: [HepG2, 293T], vector: [KD, WT]}
+    factor: vector
+    levels: [KD, WT]
+    random_effects: "(1|celltype)"
+    direction: positive
+site_sets:
+  - name: PUS7_dep_union
+    op: union
+    of: [PUS7_dep_HepG2_WT_v_KD, PUS7_dep_293T_WT_v_KD, PUS7_dep_Both_WT_v_KD]
+    quartiles_by: {analysis: WT_mod_Both, column: delta_delrate}

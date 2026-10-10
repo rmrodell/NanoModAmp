@@ -40,7 +40,8 @@ site_sets:                        # optional
 Every name under `of` and `quartiles_by.analysis` must be an analysis defined above.
 
 Defaults: `random_effects: ""`, `sesoi: 0.05`, `fdr: 0.05`, `direction: positive`,
-`plot_all_sites: --plot_all_sites`. `assets/analyses_example.yaml` (WP4/WP5) reproduces the
+`plot_all_sites: --plot_all_sites`, `p_adjust: BH` (BH across the tested sites of the analysis;
+`legacy` reproduces the paper's per-site no-op, R-30). `assets/analyses_example.yaml` (WP4/WP5) reproduces the
 paper's Figure 2 and Figure 3 analyses.
 
 Example: [examples/analyses.yaml](examples/analyses.yaml).

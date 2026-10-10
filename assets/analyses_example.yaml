@@ -1,0 +1,150 @@
+# Full set of analyses reproducing the paper (plan §5.4; built in WP4).
+# Each block applies to its own experiment's counts table; to run one experiment, use the
+# matching file in assets/analyses/ (invitro.yaml, incellulo.yaml, endogenous.yaml), which
+# contain the same entries (endogenous names there have no `endo_` prefix).
+# Multiple testing defaults to p_adjust: BH (R-30). To reproduce the paper's tables exactly, add
+# `p_adjust: legacy` to each analysis (or pass --p_adjust legacy to bin/nma_call.R).
+analyses:
+  # Figure 3 in vitro (modification_analysis.R): BS vs input. noPUS samples are labeled treat=input
+  # in the sample sheet (D14), so no recoding happens here.
+  - name: invitro
+    type: treatment
+    subset: {celltype: [IV]}
+    random_effects: ""
+    sesoi: 0.05
+    fdr: 0.05
+    plot_all_sites: true
+    colors: {modified: "#c154c1", input: "#eee8aa"}
+  # Figure 3 in cellulo (incell_analysis.R). WT vectors: P102, P4 (and WT); P101 = PUS7 KD; P3 = PUS7 OE.
+  # Levels are [baseline, experimental] in the paper's order; dd = experimental - baseline.
+  # WT modification (BS vs input in WT-like vectors)
+  - name: WT_mod_HepG2
+    type: treatment
+    subset: {celltype: [HepG2], vector: [WT, P102, P4]}
+    random_effects: "(1|vector)"
+    colors: {modified: "#e25098", input: "#eee8aa"}
+  - name: WT_mod_293T
+    type: treatment
+    subset: {celltype: [293T], vector: [WT, P102, P4]}
+    random_effects: "(1|vector)"
+    colors: {modified: "#e25098", input: "#eee8aa"}
+  - name: WT_mod_Both
+    type: treatment
+    subset: {celltype: [HepG2, 293T], vector: [WT, P102, P4]}
+    random_effects: "(1|vector) + (1|celltype)"
+    colors: {modified: "#e25098", input: "#eee8aa"}
+  # PUS7 dependency (generic factor analysis on `vector`)
+  - name: PUS7_dep_HepG2_WT_v_KD
+    type: factor
+    subset: {celltype: [HepG2], vector: [P101, P102]}
+    factor: vector
+    levels: [P101, P102]
+    random_effects: ""
+    direction: positive
+    colors: {input: "#eee8aa", baseline: "#ed93c0", experimental: "#e25098"}
+  - name: PUS7_dep_HepG2_WT_v_OE
+    type: factor
+    subset: {celltype: [HepG2], vector: [P4, P3]}
+    factor: vector
+    levels: [P4, P3]
+    random_effects: ""
+    direction: positive
+    colors: {input: "#eee8aa", baseline: "#e25098", experimental: "#a21b5d"}
+  - name: PUS7_dep_293T_WT_v_KD
+    type: factor
+    subset: {celltype: [293T], vector: [P101, P102]}
+    factor: vector
+    levels: [P101, P102]
+    random_effects: ""
+    direction: positive
+    colors: {input: "#eee8aa", baseline: "#ed93c0", experimental: "#e25098"}
+  - name: PUS7_dep_293T_WT_v_OE
+    type: factor
+    subset: {celltype: [293T], vector: [P4, P3]}
+    factor: vector
+    levels: [P4, P3]
+    random_effects: ""
+    direction: positive
+    colors: {input: "#eee8aa", baseline: "#e25098", experimental: "#a21b5d"}
+  - name: PUS7_dep_Both_WT_v_KD
+    type: factor
+    subset: {celltype: [HepG2, 293T], vector: [P101, P102]}
+    factor: vector
+    levels: [P101, P102]
+    random_effects: "(1|celltype)"
+    direction: positive
+    colors: {input: "#eee8aa", baseline: "#ed93c0", experimental: "#e25098"}
+  - name: PUS7_dep_Both_WT_v_OE
+    type: factor
+    subset: {celltype: [HepG2, 293T], vector: [P4, P3]}
+    factor: vector
+    levels: [P4, P3]
+    random_effects: "(1|celltype)"
+    direction: positive
+    colors: {input: "#eee8aa", baseline: "#e25098", experimental: "#a21b5d"}
+  # Cell-type specificity (paper Figure 3; not exercised by the golden package)
+  - name: celltype_spec
+    type: factor
+    subset: {celltype: [HepG2, 293T], vector: [WT, P102, P4]}
+    factor: celltype
+    levels: [HepG2, 293T]
+    random_effects: "(1|vector)"
+    direction: both
+    colors: {input: "#eee8aa", baseline: "#009acd", experimental: "#32cd32"}
+  # Figure 2 endogenous under the Figure 3 method (D13, R-21, R-22), on counts merged across runs
+  # (D32). Random effects (D33): (1|rep) is always in the model; (1|celltype) is added when both cell
+  # types are analysed together. Vector labels are WT / KD (P36, pLKO -> WT; P97, shPUS7 -> KD).
+  - name: endo_WT_mod_HepG2
+    type: treatment
+    subset: {celltype: [HepG2], vector: [WT]}
+    random_effects: ""
+  - name: endo_WT_mod_293T
+    type: treatment
+    subset: {celltype: [293T], vector: [WT]}
+    random_effects: ""
+  - name: endo_WT_mod_Both
+    type: treatment
+    subset: {celltype: [HepG2, 293T], vector: [WT]}
+    random_effects: "(1|celltype)"
+  - name: endo_PUS7_dep_HepG2_WT_v_KD
+    type: factor
+    subset: {celltype: [HepG2], vector: [KD, WT]}
+    factor: vector
+    levels: [KD, WT]
+    random_effects: ""
+    direction: positive
+  - name: endo_PUS7_dep_293T_WT_v_KD
+    type: factor
+    subset: {celltype: [293T], vector: [KD, WT]}
+    factor: vector
+    levels: [KD, WT]
+    random_effects: ""
+    direction: positive
+  - name: endo_PUS7_dep_Both_WT_v_KD
+    type: factor
+    subset: {celltype: [HepG2, 293T], vector: [KD, WT]}
+    factor: vector
+    levels: [KD, WT]
+    random_effects: "(1|celltype)"
+    direction: positive
+site_sets:
+  # The paper's PUS7 union, binned by each WT_mod run's delta_delrate.
+  - name: PUS7_dep_union
+    op: union
+    of: [PUS7_dep_HepG2_WT_v_KD, PUS7_dep_HepG2_WT_v_OE, PUS7_dep_293T_WT_v_KD,
+         PUS7_dep_293T_WT_v_OE, PUS7_dep_Both_WT_v_KD, PUS7_dep_Both_WT_v_OE]
+    quartiles_by: {analysis: WT_mod_Both, column: delta_delrate}
+  - name: PUS7_dep_union_by_HepG2_WT
+    op: union
+    of: [PUS7_dep_HepG2_WT_v_KD, PUS7_dep_HepG2_WT_v_OE, PUS7_dep_293T_WT_v_KD,
+         PUS7_dep_293T_WT_v_OE, PUS7_dep_Both_WT_v_KD, PUS7_dep_Both_WT_v_OE]
+    quartiles_by: {analysis: WT_mod_HepG2, column: delta_delrate}
+  - name: PUS7_dep_union_by_293T_WT
+    op: union
+    of: [PUS7_dep_HepG2_WT_v_KD, PUS7_dep_HepG2_WT_v_OE, PUS7_dep_293T_WT_v_KD,
+         PUS7_dep_293T_WT_v_OE, PUS7_dep_Both_WT_v_KD, PUS7_dep_Both_WT_v_OE]
+    quartiles_by: {analysis: WT_mod_293T, column: delta_delrate}
+  - name: endo_PUS7_dep_union
+    op: union
+    of: [endo_PUS7_dep_HepG2_WT_v_KD, endo_PUS7_dep_293T_WT_v_KD, endo_PUS7_dep_Both_WT_v_KD]
+    quartiles_by: {analysis: endo_WT_mod_Both, column: delta_delrate}

@@ -6,24 +6,37 @@ Authors@R: c(
     person("Becca", "Rodell", email = "rodell@stanford.edu", role = c("aut", "cre")))
 Description: Per-site base, deletion and insertion counts from amplicon BAMs
     (ported from the PUS7regulation2026 Figure 2/3 counting code), name-based
-    merging of per-sample count tables, and background deletion QC. Used by the
+    merging of per-sample count tables, background deletion QC, and site
+    calling: BS-vs-input treatment tests with equivalence (TOST), factor
+    (e.g. PUS7 dependency) tests, site sets and plots, ported from the
+    Figure 3 modification_analysis.R and incell_analysis.R. Used by the
     NanoModAmp Nextflow pipeline through the CLIs in bin/.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends: R (>= 4.2)
 Imports:
-    data.table,
-    GenomicRanges,
-    IRanges,
-    Rsamtools,
     Biostrings,
-    S4Vectors,
-    GenomeInfoDb,
+    blme,
+    car,
+    data.table,
+    dplyr,
+    forcats,
+    furrr,
     future,
     future.apply,
+    GenomeInfoDb,
+    GenomicRanges,
     ggplot2,
+    IRanges,
+    lme4,
+    readr,
+    rlang,
+    Rsamtools,
+    S4Vectors,
     stats,
-    utils
+    tidyr,
+    utils,
+    yaml
 Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

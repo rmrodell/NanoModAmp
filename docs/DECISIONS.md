@@ -62,3 +62,4 @@ Every decision with its date and approver (plan §0 rule 5). Golden-package deci
 | 2026-10-06 | WP0 | Nextflow minimum lowered from the template's 25.10.4 to 25.04.7, the newest Nextflow module on Sherlock; stub runs verified on 25.04.7. To confirm at G0. | Orchestrator (pending G0) |
 | 2026-10-09 | D33 | Endogenous random effects: replicate `(1|rep)` (always in the model) plus `(1|celltype)` for analyses combining both cell types. | Becca |
 | 2026-10-09 | R-31 | The pipeline always rebuilds the FASTA index instead of trusting an existing `.fai`; counting errors on a `.fai` that does not match its FASTA. | Becca |
+| 2026-10-09 | R-30 | Multiple testing: default `p_adjust = BH` (across all tested sites per analysis, plan §6.3 step 5 / §6.4 step 3); `legacy` (per-site no-op) remains available and reproduces the paper tables. | Becca |

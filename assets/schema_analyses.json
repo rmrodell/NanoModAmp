@@ -33,7 +33,8 @@
                         "items": { "type": ["string", "integer"] },
                         "description": "factor analyses only: [baseline, experimental]"
                     },
-                    "direction": { "type": "string", "enum": ["positive", "both"], "default": "positive" }
+                    "direction": { "type": "string", "enum": ["positive", "both"], "default": "positive" },
+                    "p_adjust": { "type": "string", "enum": ["BH", "legacy"], "default": "BH", "description": "BH across the tested sites of the analysis (default), or legacy: the paper's per-site no-op (R-30)" }
                 },
                 "if": { "properties": { "type": { "const": "factor" } } },
                 "then": { "required": ["factor", "levels"] }
