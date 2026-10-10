@@ -8,14 +8,14 @@
 # D25). Approved changes: seeded future_map with workers = task.cpus (R-03); `na.rm = TRUE` in
 # the all-below-SESOI pre-filter (R-17); explicit `treat` values only (D14, no noPUS recoding).
 #
-# Multiple testing (R-30, PROPOSED): in both legacy scripts `p.adjust(..., "BH")` runs inside a
-# mutate() on a tibble still grouped by (chr, pos), so BH sees one p-value at a time and the
+# Multiple testing (R-30, APPROVED 2026-10-09): in both legacy scripts `p.adjust(..., "BH")` runs
+# inside a mutate() on a tibble still grouped by (chr, pos), so BH sees one p-value at a time and the
 # "adjusted" column equals the raw p-value (confirmed in the shipped Figure 3 tables).
-# `p_adjust = "legacy"` (default, reproduces the paper) keeps that; `p_adjust = "BH"` applies BH
-# over all tested sites as plan §6.3 step 5 / §6.4 step 3 describe. Becca decides at a gate.
+# Default `p_adjust = "BH"` applies BH over all tested sites of an analysis (plan §6.3 step 5 /
+# §6.4 step 3); `p_adjust = "legacy"` keeps the per-site no-op and reproduces the paper tables.
 
 # BH over one analysis: legacy = per-site (identity), BH = across all tested sites.
-adjust_p <- function(p, p_adjust = c("legacy", "BH")) {
+adjust_p <- function(p, p_adjust = c("BH", "legacy")) {
   p_adjust <- match.arg(p_adjust)
   if (p_adjust == "legacy") {
     vapply(p, function(x) stats::p.adjust(x, method = "BH"), numeric(1))
@@ -168,12 +168,12 @@ classify_sites <- function(x, sesoi = 0.05, fdr = 0.05) {
 #' @param fdr BH threshold for Modified.
 #' @param random_effects extra terms, e.g. "(1|vector) + (1|celltype)".
 #' @param workers number of parallel workers (task.cpus).
-#' @param p_adjust "legacy" (paper: per-site, no correction) or "BH" (across tested sites); R-30.
+#' @param p_adjust "BH" (default; across tested sites) or "legacy" (paper: per-site, no correction); R-30.
 #' @return tibble in the §5.5 column order, sorted by delta_delrate descending, with
 #'   `p.value`, `is_equivalent` and `all_below_thresh` appended.
 #' @export
 treatment_test <- function(data, sesoi = 0.05, fdr = 0.05, random_effects = "", workers = 1,
-                           p_adjust = c("legacy", "BH")) {
+                           p_adjust = c("BH", "legacy")) {
   p_adjust <- match.arg(p_adjust)
   data <- check_calling_input(data)
   model_formula <- stats::as.formula(paste("delrate ~ treat + (1|rep)", re_suffix(random_effects)))
@@ -235,12 +235,12 @@ fit_factor_site <- function(nested_data, formula_factor, formula_nofactor, facto
 #' @param factor sample-sheet column, e.g. "vector".
 #' @param levels c(baseline, experimental).
 #' @param direction "positive" (dd > sesoi) or "both" (|dd| > sesoi).
-#' @param p_adjust "legacy" (paper) or "BH"; see R-30.
+#' @param p_adjust "BH" (default) or "legacy" (paper); see R-30.
 #' @return list(all_tests, significant, baseline_high, experimental_high); the last two only
 #'   for direction "both".
 #' @export
 factor_test <- function(data, factor, levels, random_effects = "", sesoi = 0.05, fdr = 0.05,
-                        direction = c("positive", "both"), workers = 1, p_adjust = c("legacy", "BH")) {
+                        direction = c("positive", "both"), workers = 1, p_adjust = c("BH", "legacy")) {
   direction <- match.arg(direction)
   p_adjust <- match.arg(p_adjust)
   data <- check_calling_input(data)

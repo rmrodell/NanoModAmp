@@ -2,6 +2,8 @@
 # Each block applies to its own experiment's counts table; to run one experiment, use the
 # matching file in assets/analyses/ (invitro.yaml, incellulo.yaml, endogenous.yaml), which
 # contain the same entries (endogenous names there have no `endo_` prefix).
+# Multiple testing defaults to p_adjust: BH (R-30). To reproduce the paper's tables exactly, add
+# `p_adjust: legacy` to each analysis (or pass --p_adjust legacy to bin/nma_call.R).
 analyses:
   # Figure 3 in vitro (modification_analysis.R): BS vs input. noPUS samples are labeled treat=input
   # in the sample sheet (D14), so no recoding happens here.

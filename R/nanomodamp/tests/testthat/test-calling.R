@@ -37,19 +37,28 @@ test_that("3: 'Not enough data' and 'Model fitting failed' paths", {
   expect_equal(nrow(f$significant), 0)
 })
 
-test_that("4: p.adjust gets exactly one p-value per tested site (BH), legacy is per-site (R-30)", {
+test_that("4: p.adjust gets exactly one p-value per tested site; BH is the default (R-30)", {
   d <- sim_treatment()
-  bh <- treatment_test(d, p_adjust = "BH")
+  bh <- treatment_test(d)                                  # default p_adjust = "BH"
   tested <- !is.na(bh$p.value)
-  expect_equal(sum(tested), 3)  # LOW is pre-filtered
+  expect_equal(sum(tested), 3)                             # LOW is pre-filtered
   expect_equal(bh$p.adjust_diff[tested], stats::p.adjust(bh$p.value[tested], method = "BH"))
-  legacy <- treatment_test(d)
-  expect_equal(legacy$p.adjust_diff, legacy$p.value)
+  expect_identical(bh, treatment_test(d, p_adjust = "BH"))
+  legacy <- treatment_test(d, p_adjust = "legacy")
+  expect_equal(legacy$p.adjust_diff, legacy$p.value)       # per-site no-op
+  expect_false(isTRUE(all.equal(bh$p.adjust_diff[tested], legacy$p.adjust_diff[tested])))  # >1 site: they differ
+  expect_true(all(bh$p.adjust_diff[tested] >= legacy$p.adjust_diff[tested]))
 
-  f <- factor_test(sim_factor(), factor = "level", levels = c("A", "B"), p_adjust = "BH")
+  f <- factor_test(sim_factor(), factor = "level", levels = c("A", "B"))
   kept <- f$all_tests$term %in% "glm_model_factor"
   expect_equal(sum(kept), 3)
   expect_equal(f$all_tests$p.value.BH[kept], stats::p.adjust(f$all_tests$p.value[kept], method = "BH"))
+  fl <- factor_test(sim_factor(), factor = "level", levels = c("A", "B"), p_adjust = "legacy")
+  expect_equal(fl$all_tests$p.value.BH, fl$all_tests$p.value)
+
+  # one tested site: BH and legacy coincide
+  one <- d[d$chr == "POS", ]
+  expect_equal(treatment_test(one)$p.adjust_diff, treatment_test(one, p_adjust = "legacy")$p.adjust_diff)
 })
 
 test_that("5: input delrate = 0 behaves as the legacy code (D25: infinite bound)", {

@@ -43,6 +43,10 @@ test_that("read_analyses validates the §5.4 config, including quartiles_by", {
   expect_named(cfg$analyses, c("t", "f", "g"))
   expect_equal(cfg$analyses$t$sesoi, 0.05)
   expect_equal(cfg$analyses$f$direction, "positive")
+  expect_equal(cfg$analyses$t$p_adjust, "BH")
+  expect_equal(read_analyses(ok, p_adjust = "legacy")$analyses$t$p_adjust, "legacy")
+  bad_p <- write_cfg(c("analyses:", "  - {name: t, type: treatment, p_adjust: bonferroni}"))
+  expect_error(read_analyses(bad_p), "p_adjust must be BH or legacy")
 
   bad_q <- write_cfg(c("analyses:", "  - {name: t, type: treatment}", "  - {name: f, type: factor, factor: level, levels: [A, B]}",
                        "  - {name: g, type: factor, factor: level, levels: [A, B]}",

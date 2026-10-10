@@ -7,6 +7,8 @@
 # under R 4.3.2 (see fixtures/legacy_equivalence/README.md); the shipped paper tables are
 # checked too (categories).
 #
+# All runs use p_adjust = "legacy" (the paper's per-site no-op, R-30); the package default is BH.
+#
 # Tolerances: p-values relative 1e-8 (values below 1e-290 count as equal: readr writes subnormal
 # doubles with a wrong exponent, e.g. 6.5187e-315 -> "6.5187e-298"); deltas and dd 1e-12
 # absolute; categories, labels, site sets and row order exact.
@@ -64,7 +66,7 @@ test_that("11a: in vitro treatment test equals modification_analysis.R exactly",
   d <- read_fx("inputs", "BIDdetect_data_invitro_delpos.txt.gz")
   # D14: the sample sheet labels noPUS samples treat = input (the legacy script recoded them)
   d$treat <- ifelse(d$vector == "noPUS" | d$treat %in% c("in", "input"), "input", "BS")
-  r <- suppressWarnings(treatment_test(d))
+  r <- suppressWarnings(treatment_test(d, p_adjust = "legacy"))
   ref <- read_fx("legacy_rerun", "invitro", "invitro_delpos_modification_significance.tsv")
   expect_equal(nrow(r), nrow(ref))
   expect_identical(paste(r$chr, r$pos), paste(ref$chr, ref$pos))   # same order (delta desc)
@@ -92,7 +94,7 @@ test_that("11b: in-cellulo WT_mod treatment tests equal incell_analysis.R", {
   for (cond in names(wt_mod_runs)) {
     run <- wt_mod_runs[[cond]]
     ds <- subset_rows(d, list(celltype = run$celltype, vector = c("WT", "P102", "P4")))
-    r <- suppressWarnings(treatment_test(ds, random_effects = run$re))
+    r <- suppressWarnings(treatment_test(ds, random_effects = run$re, p_adjust = "legacy"))
     ref <- read_fx("legacy_rerun", "incell", paste0("WT_mod_", cond, "_significance.tsv")) |>
       dplyr::semi_join(r, by = c("chr", "pos"))
     m <- dplyr::inner_join(r, ref, by = c("chr", "pos"), suffix = c("", ".ref"))
@@ -135,7 +137,8 @@ test_that("11c: PUS7-dependency factor tests and their union equal incell_analys
   for (run_name in names(pus7_runs)) {
     run <- pus7_runs[[run_name]]
     ds <- subset_rows(d, list(celltype = run$celltype, vector = run$levels))
-    f <- suppressWarnings(factor_test(ds, factor = "vector", levels = run$levels, random_effects = run$re))
+    f <- suppressWarnings(factor_test(ds, factor = "vector", levels = run$levels, random_effects = run$re,
+                                      p_adjust = "legacy"))
     sig[[run_name]] <- f$significant
     ref_file <- fx("legacy_rerun", "incell", paste0("PUS7_dep_", run_name, "_significant_summary.tsv"))
     ref <- if (file.exists(ref_file)) readr::read_tsv(ref_file, show_col_types = FALSE) else f$significant[0, ]

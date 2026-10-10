@@ -4,12 +4,12 @@
 #   site_sets/<set>/{data_summary/, data_raw/, plots/}
 
 ANALYSIS_KEYS <- c("name", "type", "subset", "random_effects", "sesoi", "fdr", "plot_all_sites",
-                   "colors", "factor", "levels", "direction")
+                   "colors", "factor", "levels", "direction", "p_adjust")
 
 #' Read and validate an analyses YAML (§5.4).
 #' @return list(analyses = named list of resolved analyses, site_sets = list).
 #' @export
-read_analyses <- function(path, plot_all_sites = FALSE) {
+read_analyses <- function(path, plot_all_sites = FALSE, p_adjust = "BH") {
   cfg <- yaml::read_yaml(path)
   if (is.null(cfg$analyses) || length(cfg$analyses) == 0) stop("analyses YAML has no 'analyses'", call. = FALSE)
   out <- list()
@@ -25,6 +25,8 @@ read_analyses <- function(path, plot_all_sites = FALSE) {
     a$random_effects <- if (is.null(a$random_effects)) "" else a$random_effects
     a$sesoi <- if (is.null(a$sesoi)) 0.05 else a$sesoi
     a$fdr <- if (is.null(a$fdr)) 0.05 else a$fdr
+    a$p_adjust <- if (is.null(a$p_adjust)) p_adjust else a$p_adjust  # R-30
+    if (!a$p_adjust %in% c("BH", "legacy")) stop("analysis '", a$name, "': p_adjust must be BH or legacy", call. = FALSE)
     a$plot_all_sites <- if (is.null(a$plot_all_sites)) plot_all_sites else a$plot_all_sites
     if (a$type == "factor") a$direction <- if (is.null(a$direction)) "positive" else a$direction
     out[[a$name]] <- a
@@ -84,12 +86,13 @@ run_analysis <- function(counts, a, outdir, workers = 1) {
   log("rows: ", nrow(data), "; sites: ", dplyr::n_distinct(data$chr, data$pos), "; samples: ",
       if ("sample_id" %in% names(data)) dplyr::n_distinct(data$sample_id) else NA)
   log("random effects: ", if (a$random_effects == "") "(none)" else a$random_effects,
-      "; sesoi: ", a$sesoi, "; fdr: ", a$fdr, "; workers: ", workers)
+      "; sesoi: ", a$sesoi, "; fdr: ", a$fdr, "; p_adjust: ", a$p_adjust, "; workers: ", workers)
   if (nrow(data) == 0) stop("analysis '", name, "': subset selects no rows", call. = FALSE)
   write_tsv(data, file.path(raw_dir, paste0(name, "_standardized_input.tsv")))
 
   if (a$type == "treatment") {
-    res <- treatment_test(data, sesoi = a$sesoi, fdr = a$fdr, random_effects = a$random_effects, workers = workers)
+    res <- treatment_test(data, sesoi = a$sesoi, fdr = a$fdr, random_effects = a$random_effects, workers = workers,
+                          p_adjust = a$p_adjust)
     log("pre-filtered (all delrate < sesoi): ", sum(res$all_below_thresh), "; tested: ", sum(!is.na(res$p.value)),
         "; not enough data: ", sum(res$equivalence_status %in% "Not enough data"),
         "; model fitting failed: ", sum(res$equivalence_status %in% "Model fitting failed"))
@@ -119,7 +122,8 @@ run_analysis <- function(counts, a, outdir, workers = 1) {
     out <- list(table = res)
   } else {
     res <- factor_test(data, factor = a$factor, levels = unlist(a$levels), random_effects = a$random_effects,
-                       sesoi = a$sesoi, fdr = a$fdr, direction = a$direction, workers = workers)
+                       sesoi = a$sesoi, fdr = a$fdr, direction = a$direction, workers = workers,
+                       p_adjust = a$p_adjust)
     log("tested: ", sum(res$all_tests$term %in% "glm_model_factor"),
         "; not enough data: ", sum(res$all_tests$note %in% "Not enough data"),
         "; model fitting failed: ", sum(res$all_tests$note %in% "Model fitting failed"),

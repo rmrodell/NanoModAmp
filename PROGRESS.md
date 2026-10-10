@@ -8,7 +8,7 @@ Plan: [plan.md](plan.md) · Decisions: [docs/DECISIONS.md](docs/DECISIONS.md) ·
 | WP1 Simulator | — | Not started | Can start after G0 |
 | WP2 Preprocessing | — | Not started | Stub modules in `modules/local/`; D29/D31 branches wired in `subworkflows/local/preprocess.nf` |
 | WP3 Counting | — | Not started | |
-| WP4 Site calling | `wp/4-calling` (local, not pushed) | **Implemented; testthat 1–11 pass locally** | `R/nanomodamp` calling/sitesets/plots/run; `bin/nma_call.R`, `bin/nma_sitesets.R`; CALL_SITES / SITE_SETS modules call them (stub run passes); `assets/analyses_example.yaml` + `assets/analyses/{invitro,incellulo,endogenous}.yaml`. Test 11: exact equivalence with the legacy scripts rerun on the shipped Figure 3 tables (see below). New discrepancy **R-30 (PROPOSED)**: legacy BH is a no-op |
+| WP4 Site calling | `wp/4-calling` (local, not pushed) | **Implemented; testthat 1–11 pass locally** | `R/nanomodamp` calling/sitesets/plots/run; `bin/nma_call.R`, `bin/nma_sitesets.R`; CALL_SITES / SITE_SETS modules call them (stub run passes); `assets/analyses_example.yaml` + `assets/analyses/{invitro,incellulo,endogenous}.yaml`. Test 11: exact equivalence with the legacy scripts rerun on the shipped Figure 3 tables (see below). R-30 **APPROVED** 2026-10-09: default `p_adjust: BH`, `legacy` reproduces the paper |
 | WP5 Golden package | `wp/5-golden-package` (local, not pushed) | In progress | Harnesses, selection, L1/V1/V2 and published rerun running on Sherlock; see `docs/plans/golden_test_package_plan.md` |
 | WP6 Documentation | — | Started in WP0 | `docs/usage.md` legacy-library section, `docs/methods.md` stub |
 | WP7 Integration | — | Blocked on WP1–WP6 | Compares against `legacy_rerun`, `published_rerun`, `paper_reference` (D30) |
@@ -46,11 +46,7 @@ rerun unchanged (R 4.3.2) on the shipped Figure 3 count tables
 - `bin/nma_call.R` on the in vitro table reproduces the legacy table exactly.
 
 **Open for Becca / Orchestrator**
-1. **R-30 (PROPOSED):** both legacy scripts run `p.adjust(..., "BH")` inside a `mutate()` on a
-   tibble still grouped by `(chr, pos)`, so no multiple-testing correction is applied (shipped
-   tables: `p.value == p.adjust_diff == p.value.BH`). Ported as `p_adjust = "legacy"` (default,
-   reproduces the paper); `p_adjust = "BH"` implements plan §6.3/§6.4 as written. Not yet exposed
-   in the analyses YAML / `schema_analyses.json` (contract change).
+1. ~~R-30~~ — decided by Becca 2026-10-09: default `p_adjust: BH` (schema key added, contract CHANGELOG updated); `legacy` reproduces the paper (used by test 11).
 2. Treatment table appends `p.value`, `is_equivalent`, `all_below_thresh` (contract §5.5 lists
    `p.value`, `is_equivalent`, `model_status` as allowed appends); model failures stay in
    `equivalence_status` as in the legacy code. Orchestrator: accept `all_below_thresh` or drop it.
