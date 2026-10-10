@@ -125,7 +125,7 @@ CHANGE_REGISTER.md  PROGRESS.md  CHANGELOG.md  CITATION.cff
 |---|---|---|
 | `input` | — | Sample sheet CSV (§5.1) |
 | `library_type` | — | `endogenous` or `mpra`, one per run |
-| `fasta` | — | Transcripts (endogenous) or oligo pool (MPRA). `.fai` is built if missing. |
+| `fasta` | — | Transcripts (endogenous) or oligo pool (MPRA). `.fai` always rebuilt; a supplied `.fai` is ignored (R-31). |
 | `bed` | — | ≥ 6 columns; amplicons or single sites (D11); strand should be `+` (warn otherwise) |
 | `bed_coordinates` | `bed0` | `bed0` (standard, default) or `one_based_start` (legacy reading of the paper's BEDs). Under `bed0`, start = end rows are an error. See R-15, D27 |
 | `ont_adapter_sense_5p` | `TTTCTGTTGGTGCTGATATTGCG` | |

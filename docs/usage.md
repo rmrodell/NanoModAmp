@@ -36,7 +36,7 @@ contract is in [docs/contracts/samplesheet.md](contracts/samplesheet.md).
 | Parameter | Meaning |
 | --------- | ------- |
 | `--library_type` | `endogenous` (transcript amplicons) or `mpra` (oligo pool). Sets the minimap2 default (`mpra`: `-ax sr`; `endogenous`: `-ax splice -uf`, D5) and enables the MPRA pool-adapter trim. |
-| `--fasta` | Transcript sequences (endogenous) or the oligo pool (MPRA). The `.fai` is built if missing. |
+| `--fasta` | Transcript sequences (endogenous) or the oligo pool (MPRA), plain or `.gz`. The `.fai` index is always rebuilt by the pipeline; a `.fai` next to the FASTA is ignored, because a stale index (e.g. left over after the FASTA was rewritten) silently gives wrong reference bases (R-31). |
 | `--bed` | Amplicons or single sites, at least 6 columns, `+` strand. |
 | `--bed_coordinates` | `bed0` (default): standard 0-based, half-open BED; a single site at 1-based position *p* is `start = p-1, end = p`. `one_based_start`: legacy reading of the paper's BEDs, where start and end are both 1-based and inclusive (single site `start = end = p`). Under `bed0`, a row with start = end stops the run with a message pointing to `one_based_start`; the convention is never guessed (D27, R-15). |
 

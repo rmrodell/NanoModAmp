@@ -14,17 +14,13 @@ workflow COUNT_SITES {
     ch_samplesheet  // channel: path(samplesheet), value
 
     main:
-    // .fai is built if missing (§3)
-    def fai = file("${params.fasta}.fai")
-    def ch_fai
-    if (fai.exists()) {
-        ch_fai = channel.value(fai)
-    } else {
-        SAMTOOLS_FAIDX(ch_fasta)
-        ch_fai = SAMTOOLS_FAIDX.out.fai
-    }
+    // R-31: the .fai is always rebuilt on a copy of --fasta (decompressed if .gz); a .fai supplied
+    // next to --fasta is never staged, so Rsamtools in COUNT only ever sees the fresh index.
+    SAMTOOLS_FAIDX(ch_fasta)
+    def ch_ref_fasta = SAMTOOLS_FAIDX.out.fasta.first()
+    def ch_ref_fai   = SAMTOOLS_FAIDX.out.fai.first()
 
-    COUNT(ch_bam_bai, ch_fasta, ch_fai, ch_bed)
+    COUNT(ch_bam_bai, ch_ref_fasta, ch_ref_fai, ch_bed)
     MERGE_COUNTS(COUNT.out.counts.map { _meta, tsv -> tsv }.collect(), ch_samplesheet)
 
     def ch_background = channel.empty()

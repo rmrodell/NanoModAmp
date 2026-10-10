@@ -1,0 +1,40 @@
+nextflow_process {
+
+    name "Test SAMTOOLS_FAIDX"
+    script "../main.nf"
+    process "SAMTOOLS_FAIDX"
+
+    // R-31: a stale .fai next to --fasta must never be used; the module always builds a fresh one.
+    test("stale .fai next to the FASTA is ignored and a fresh index is built") {
+        when {
+            process {
+                """
+                input[0] = file("${projectDir}/tests/data/stale_fai/ref.fa", checkIfExists: true)
+                """
+            }
+        }
+        then {
+            assert process.success
+            def fresh = file("${projectDir}/tests/data/stale_fai/expected_fresh.fai").text
+            def stale = file("${projectDir}/tests/data/stale_fai/ref.fa.fai").text
+            assert path(process.out.fai[0]).text == fresh
+            assert path(process.out.fai[0]).text != stale
+            assert path(process.out.fasta[0]).text == file("${projectDir}/tests/data/stale_fai/ref.fa").text
+        }
+    }
+
+    test("gzipped FASTA is decompressed and indexed") {
+        when {
+            process {
+                """
+                input[0] = file("${projectDir}/tests/data/stale_fai/ref.fa.gz", checkIfExists: true)
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert file(process.out.fasta[0]).name == "ref.fa"
+            assert path(process.out.fai[0]).text == file("${projectDir}/tests/data/stale_fai/expected_fresh.fai").text
+        }
+    }
+}

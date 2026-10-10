@@ -35,5 +35,6 @@ Status values: `APPROVED` (implement), `KEEP` (preserve legacy behavior and docu
 | R-27 | Endogenous 20250418 paper counts were made on **pre-dedup** BAMs; 20251022 on dedup BAMs | Pipeline always counts the final BAM; difference reported for 20250418 | APPROVED | 20250418 totalReads higher in the paper than after dedup |
 | R-29 | Paper run 20250418 reads lack the 5′ ONT adapter; legacy trimmed the 3′ adapter only (`-a`, untrimmed kept) | Opt-in `ont_adapter_mode=three_prime_only` (D31) for those golden samples only; published rerun uses the same trim for them (documented variant) | APPROVED | Without it, 0 reads pass for 20250418 |
 | R-28 | `umi_tools dedup` picks random representatives (no seed) | Superseded by UMICollapse (D7); legacy harness seeded (edit e) | SUPERSEDED | None |
+| R-31 | Existing `.fai` trusted (built only if missing); a stale index (pool1 `.fai` predates a CRLF→LF rewrite) gives wrong ref bases/kmers | Always rebuild the `.fai` on a copy of `--fasta` (SAMTOOLS_FAIDX); `nma_count.R` errors if a `.fai` does not match its FASTA (names, lengths, offsets) | APPROVED (2026-10-09) | None with a correct index; prevents silent wrong counts |
 
 ---

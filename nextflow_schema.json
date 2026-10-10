@@ -71,7 +71,7 @@
                 "fasta": {
                     "type": "string",
                     "description": "Reference FASTA: transcript sequences (endogenous) or the oligo pool (MPRA).",
-                    "help_text": "The `.fai` index is built if missing.",
+                    "help_text": "The `.fai` index is always rebuilt on a copy of the FASTA (decompressed if `.gz`); a `.fai` supplied next to the FASTA is ignored (R-31).",
                     "format": "file-path",
                     "exists": true,
                     "pattern": "^\\S+\\.(fa|fasta|fna)(\\.gz)?$"

@@ -1,27 +1,40 @@
-// SAMTOOLS_FAIDX
-// WP0 stub: the real command is implemented in WP2; the stub block lets `-stub` runs test the wiring.
+// SAMTOOLS_FAIDX: always builds a fresh .fai (R-31). The --fasta is copied (decompressed if .gz)
+// to ref/<name>.fa and indexed there, so a .fai the user left next to --fasta is never used.
 process SAMTOOLS_FAIDX {
     label 'process_single'
 
-    container 'docker.io/library/ubuntu:22.04' // placeholder, pinned in WP2
+    container 'quay.io/biocontainers/samtools:1.21--h50ea8bc_0'
 
     input:
     path fasta
 
     output:
-    path("${fasta}.fai"), emit: fai
+    path("ref/${name}"),     emit: fasta
+    path("ref/${name}.fai"), emit: fai
+    path "versions.yml",     emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
+    name = fasta.name.replaceAll(/\.gz$/, '')
+    def unpack = fasta.name.endsWith('.gz') ? "gzip -cd ${fasta}" : "cat ${fasta}"
     """
-    echo "SAMTOOLS_FAIDX is not implemented yet (WP2); use -stub" >&2
-    exit 1
+    mkdir -p ref
+    ${unpack} > ref/${name}
+    samtools faidx ref/${name}
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        samtools: \$(samtools --version | head -n 1 | sed 's/samtools //')
+    END_VERSIONS
     """
 
     stub:
+    name = fasta.name.replaceAll(/\.gz$/, '')
     """
-    touch ${fasta}.fai
+    mkdir -p ref
+    touch ref/${name} ref/${name}.fai
+    printf '"%s":\\n    samtools: stub\\n' "${task.process}" > versions.yml
     """
 }
