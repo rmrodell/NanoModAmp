@@ -1,0 +1,10 @@
+# Figure 3 in cellulo, run 20241114: library built without ONT adapters or UMIs -> opt-in modes for THESE samples only (D29, R-26).
+# All other data, including new in-cellulo data, use the defaults (orientation_adapters=ont, umi=true).
+orientation_adapters: pool
+umi: false
+input: samplesheet.csv
+library_type: mpra
+fasta: reference/pool1.fa.gz
+bed: targets.bed
+analyses: analyses.yaml
+bed_coordinates: bed0  # G1-e: targets.bed is standard 0-based

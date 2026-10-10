@@ -1,0 +1,80 @@
+# Figure 3 in cellulo (incell_analysis.R): WT_mod + PUS7 dependency; cell-type-specific analyses out of scope.
+# Paper wt_vectors also included HepG2 'WT', which is not in the package (G1-b).
+analyses:
+  - name: WT_mod_HepG2
+    type: treatment
+    subset: {celltype: [HepG2], vector: [P102, P4]}
+    random_effects: "(1|vector)"
+    sesoi: 0.05
+    fdr: 0.05
+  - name: WT_mod_293T
+    type: treatment
+    subset: {celltype: [293T], vector: [P102, P4]}
+    random_effects: "(1|vector)"
+    sesoi: 0.05
+    fdr: 0.05
+  - name: WT_mod_Both
+    type: treatment
+    subset: {celltype: [HepG2, 293T], vector: [P102, P4]}
+    random_effects: "(1|vector) + (1|celltype)"
+    sesoi: 0.05
+    fdr: 0.05
+  - name: PUS7_dep_HepG2_WT_v_KD
+    type: factor
+    subset: {celltype: [HepG2], vector: [P101, P102]}
+    factor: vector
+    levels: [P101, P102]
+    random_effects: ""
+    direction: positive
+    sesoi: 0.05
+    fdr: 0.05
+  - name: PUS7_dep_HepG2_WT_v_OE
+    type: factor
+    subset: {celltype: [HepG2], vector: [P4, P3]}
+    factor: vector
+    levels: [P4, P3]
+    random_effects: ""
+    direction: positive
+    sesoi: 0.05
+    fdr: 0.05
+  - name: PUS7_dep_293T_WT_v_KD
+    type: factor
+    subset: {celltype: [293T], vector: [P101, P102]}
+    factor: vector
+    levels: [P101, P102]
+    random_effects: ""
+    direction: positive
+    sesoi: 0.05
+    fdr: 0.05
+  - name: PUS7_dep_293T_WT_v_OE
+    type: factor
+    subset: {celltype: [293T], vector: [P4, P3]}
+    factor: vector
+    levels: [P4, P3]
+    random_effects: ""
+    direction: positive
+    sesoi: 0.05
+    fdr: 0.05
+  - name: PUS7_dep_Both_WT_v_KD
+    type: factor
+    subset: {celltype: [HepG2, 293T], vector: [P101, P102]}
+    factor: vector
+    levels: [P101, P102]
+    random_effects: "(1|celltype)"
+    direction: positive
+    sesoi: 0.05
+    fdr: 0.05
+  - name: PUS7_dep_Both_WT_v_OE
+    type: factor
+    subset: {celltype: [HepG2, 293T], vector: [P4, P3]}
+    factor: vector
+    levels: [P4, P3]
+    random_effects: "(1|celltype)"
+    direction: positive
+    sesoi: 0.05
+    fdr: 0.05
+site_sets:
+  - name: PUS7_dep_union
+    op: union
+    of: [PUS7_dep_HepG2_WT_v_KD, PUS7_dep_HepG2_WT_v_OE, PUS7_dep_293T_WT_v_KD, PUS7_dep_293T_WT_v_OE, PUS7_dep_Both_WT_v_KD, PUS7_dep_Both_WT_v_OE]
+    quartiles_by: {analysis: WT_mod_Both, column: delta_delrate}

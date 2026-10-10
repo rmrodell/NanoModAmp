@@ -1,0 +1,244 @@
+# Legacy harness: every change vs the scripts as executed for the paper runs (see SOURCES.md).
+# Allowed edits only: (a) keep pre-dedup BAM, (b) paths/modules/no-install, (c) incell user config, (d) sample_name.R, (e) fixed umi_tools dedup --random-seed (G1-c, 2026-10-06).
+# Files present only in original/ (sbatch, process.txt, fastaprep.sh) are records, not run by the harness.
+diff -ruN -x '*.sbatch' -x process.txt -x fastaprep.sh original/endogenous/20250418/dedup_mapping.sh endogenous/20250418/dedup_mapping.sh
+--- original/endogenous/20250418/dedup_mapping.sh	2026-10-06 14:56:19.545953000 -0700
++++ endogenous/20250418/dedup_mapping.sh	2026-10-06 15:43:31.602628000 -0700
+@@ -71,7 +71,7 @@
+ 
+ echo "mapping with minimap2"
+ # Map using minimap2
+-/oak/stanford/groups/nicolemm/rodell/minimap2/minimap2 -a ${REFERENCE_FASTA} ${BASE_DIR}/UMI_extracted/${SAMPLE_NAME}_UMI.fq -k5 -t ${THREADS} > ${BASE_DIR}/minimap2/${SAMPLE_NAME}_UMI.sam 2>> ${minimap2_log}
++${MINIMAP2:-/oak/stanford/groups/nicolemm/rodell/minimap2/minimap2} -a ${REFERENCE_FASTA} ${BASE_DIR}/UMI_extracted/${SAMPLE_NAME}_UMI.fq -k5 -t ${THREADS} > ${BASE_DIR}/minimap2/${SAMPLE_NAME}_UMI.sam 2>> ${minimap2_log}
+ 
+ 
+ # Convert to BAM file, sort the file, and index it
+@@ -83,7 +83,8 @@
+ 
+ # deduplicate
+ echo "deduplicating UMIs"
+-umi_tools dedup --method directional -I ${BASE_DIR}/minimap2/sorted/${SAMPLE_NAME}_UMI_sort.bam -S ${BASE_DIR}/minimap2/dedup/${SAMPLE_NAME}_UMI_dedup.bam -L ${BASE_DIR}/logs/UMI_dedup.log
++# legacy-harness edit (e): fixed umi_tools random seed (Becca, G1-c 2026-10-06); paper runs used none
++umi_tools dedup --random-seed="${UMI_DEDUP_SEED:-20261004}" --method directional -I ${BASE_DIR}/minimap2/sorted/${SAMPLE_NAME}_UMI_sort.bam -S ${BASE_DIR}/minimap2/dedup/${SAMPLE_NAME}_UMI_dedup.bam -L ${BASE_DIR}/logs/UMI_dedup.log
+ 
+ samtools index ${BASE_DIR}/minimap2/dedup/${SAMPLE_NAME}_UMI_dedup.bam
+ 
+diff -ruN -x '*.sbatch' -x process.txt -x fastaprep.sh original/endogenous/20250418/DelDetect.sh endogenous/20250418/DelDetect.sh
+--- original/endogenous/20250418/DelDetect.sh	2026-10-06 14:56:19.570969000 -0700
++++ endogenous/20250418/DelDetect.sh	2026-10-06 14:59:41.786052000 -0700
+@@ -1,6 +1,6 @@
+ #!/bin/bash
+   
+-ml R
++ml R/4.2.0  # legacy-harness edit (b): pin the default R module of 2025
+ 
+ # Get the directory where DelDetect.sh is located
+ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+@@ -25,7 +25,7 @@
+ # Initialize the final output file with headers
+ echo -e "sample\tchr\tpos\tgene\ttotalReads\tA.count\tC.count\tG.count\tT.count\tDeletion.count\tInsertion.count\tref\tkmer\tstrand" > "$count_file"
+ 
+-(cd $BAM_PATH
++(cd $DEST_PATH  # legacy-harness edit (b): was "cd $BAM_PATH" (wrote per-sample counts into the input BAM dir)
+ # Loop through each .bam file in the input directory
+ for bam_file in "$BAM_PATH"/*.bam; do
+ 
+diff -ruN -x '*.sbatch' -x process.txt -x fastaprep.sh original/endogenous/20251022/BIDdetect.sh endogenous/20251022/BIDdetect.sh
+--- original/endogenous/20251022/BIDdetect.sh	2026-10-06 14:56:19.718238000 -0700
++++ endogenous/20251022/BIDdetect.sh	2026-10-06 14:59:41.747349000 -0700
+@@ -74,7 +74,7 @@
+ # --- 3. Setup Environment and Logging ---
+ 
+ # Load required modules
+-ml R
++ml R/4.2.0  # legacy-harness edit (b): pin the default R module of 2025
+ 
+ # Create output directories
+ LOG_DIR="${DEST_DIR}/logs"
+diff -ruN -x '*.sbatch' -x process.txt -x fastaprep.sh original/endogenous/20251022/trim_map_dedup.sh endogenous/20251022/trim_map_dedup.sh
+--- original/endogenous/20251022/trim_map_dedup.sh	2025-12-18 11:30:27.000000000 -0800
++++ endogenous/20251022/trim_map_dedup.sh	2026-10-06 15:43:31.607435000 -0700
+@@ -246,7 +246,7 @@
+ start_time=$(date +%s)
+ log_message "  - Reverse-complementing antisense reads..."
+ 
+-$HOME/seqtk/seqtk seq -r "$ANTISENSE_TRIM1_RAW" > "$ANTISENSE_TRIM1_RC"
++"${SEQTK:-$HOME/seqtk/seqtk}" seq -r "$ANTISENSE_TRIM1_RAW" > "$ANTISENSE_TRIM1_RC"
+ track_metrics "3a_Antisense_RC" "$ANTISENSE_TRIM1_RC"
+ log_message "  - Combining all reads into a single sense-oriented stream..."
+ 
+@@ -266,7 +266,7 @@
+ log_message "Step 5: Mapping reads with Minimap2..."
+ start_time=$(date +%s)
+ 
+-$OAK/rodell/minimap2/minimap2 \
++"${MINIMAP2:-$OAK/rodell/minimap2/minimap2}" \
+     -a \
+     "$REF_FA" \
+     "$COMBINED_UMI" \
+@@ -287,7 +287,9 @@
+ # --- 7. Deduplicate Reads with UMI-tools ---
+ log_message "Step 7: Deduplicating reads with UMI-tools and indexing..."
+ start_time=$(date +%s)
++# legacy-harness edit (e): fixed umi_tools random seed (Becca, G1-c 2026-10-06); paper runs used none
+ umi_tools dedup \
++    --random-seed="${UMI_DEDUP_SEED:-20261004}" \
+     --method directional \
+     -I "$MAPPED_BAM" \
+     -S "$DEDUP_BAM" \
+@@ -329,6 +331,9 @@
+ # --- Step 9: Clean up intermediate files ---
+ log_message "Step 9: Intermediate file cleanup is currently disabled."
+ # rm -rf "$TMP_DIR"
++# legacy-harness edit (a): keep the pre-dedup sorted BAM for read-ID assignment (golden plan 4.3)
++mkdir -p "${TOP_LEVEL_OUTPUT_DIR}/retained"
++cp "$MAPPED_BAM" "${MAPPED_BAM}.bai" "${TOP_LEVEL_OUTPUT_DIR}/retained/"
+ 
+ log_message "--- Pipeline for ${SAMPLE_ID} finished successfully! ---"
+ 
+diff -ruN -x '*.sbatch' -x process.txt -x fastaprep.sh original/endogenous/site_calling/analysis_endo.R endogenous/site_calling/analysis_endo.R
+--- original/endogenous/site_calling/analysis_endo.R	2026-04-17 14:40:21.163511000 -0700
++++ endogenous/site_calling/analysis_endo.R	2026-10-06 15:02:32.697600000 -0700
+@@ -10,7 +10,7 @@
+ library(ggrepel)
+ 
+ # ---- Directory ----
+-active_dir <- "~/PUS7regulation2026/Figure2/endo_sites"
++active_dir <- paste0(Sys.getenv("LEGACY_ENDO_DIR", "~/PUS7regulation2026/Figure2/endo_sites"), "/")  # legacy-harness edit (b): configurable dir + missing "/"
+ 
+ # ---- Colors ----
+ incell <- "#c154c1"
+diff -ruN -x '*.sbatch' -x process.txt -x fastaprep.sh original/mpra_invitro/BIDdetect.sh mpra_invitro/BIDdetect.sh
+--- original/mpra_invitro/BIDdetect.sh	2026-10-06 14:56:19.861792000 -0700
++++ mpra_invitro/BIDdetect.sh	2026-10-06 14:59:41.760131000 -0700
+@@ -74,7 +74,7 @@
+ # --- 3. Setup Environment and Logging ---
+ 
+ # Load required modules
+-ml R
++ml R/4.2.0  # legacy-harness edit (b): pin the default R module of 2025
+ 
+ # Create output directories
+ LOG_DIR="${DEST_DIR}/logs"
+diff -ruN -x '*.sbatch' -x process.txt -x fastaprep.sh original/mpra_invitro/modification_analysis.R mpra_invitro/modification_analysis.R
+--- original/mpra_invitro/modification_analysis.R	2026-04-17 15:07:31.351331000 -0700
++++ mpra_invitro/modification_analysis.R	2026-10-06 15:00:57.902728000 -0700
+@@ -72,7 +72,7 @@
+ 
+ if (length(missing_packages) > 0) {
+   cat("Installing missing packages:", paste(missing_packages, collapse = ", "), "\n")
+-  install.packages(missing_packages, repos = "http://cran.us.r-project.org")
++  stop("Missing R packages: ", paste(missing_packages, collapse = ", "), " (legacy-harness edit (b): no runtime installs on Sherlock)")
+ }
+ 
+ suppressPackageStartupMessages({
+diff -ruN -x '*.sbatch' -x process.txt -x fastaprep.sh original/mpra_invitro/trim_map_dedup_mpra.sh mpra_invitro/trim_map_dedup_mpra.sh
+--- original/mpra_invitro/trim_map_dedup_mpra.sh	2026-10-06 14:56:19.836400000 -0700
++++ mpra_invitro/trim_map_dedup_mpra.sh	2026-10-06 15:43:31.611605000 -0700
+@@ -271,7 +271,7 @@
+ start_time=$(date +%s)
+ log_message "  - Reverse-complementing antisense reads..."
+ 
+-$HOME/seqtk/seqtk seq -r "$ANTISENSE_TRIM1_RAW" > "$ANTISENSE_TRIM1_RC"
++"${SEQTK:-$HOME/seqtk/seqtk}" seq -r "$ANTISENSE_TRIM1_RAW" > "$ANTISENSE_TRIM1_RC"
+ track_metrics "3a_Antisense_RC" "$ANTISENSE_TRIM1_RC"
+ log_message "  - Combining all reads into a single sense-oriented stream..."
+ 
+@@ -302,7 +302,7 @@
+ log_message "Step 6: Mapping reads with Minimap2..."
+ start_time=$(date +%s)
+ 
+-$OAK/rodell/minimap2/minimap2 \
++"${MINIMAP2:-$OAK/rodell/minimap2/minimap2}" \
+     -a \
+     "$REF_FA" \
+     "$COMBINED_TRIM2" \
+@@ -323,7 +323,9 @@
+ # --- 8. Deduplicate Reads with UMI-tools ---
+ log_message "Step 8: Deduplicating reads with UMI-tools and indexing..."
+ start_time=$(date +%s)
++# legacy-harness edit (e): fixed umi_tools random seed (Becca, G1-c 2026-10-06); paper runs used none
+ umi_tools dedup \
++    --random-seed="${UMI_DEDUP_SEED:-20261004}" \
+     --method directional \
+     -I "$MAPPED_BAM" \
+     -S "$DEDUP_BAM" \
+@@ -364,6 +366,9 @@
+ # --- Step 10: Clean up intermediate files ---
+ # log_message "Step 10: Remove intermediary files."
+ # rm -rf "$TMP_DIR"
++# legacy-harness edit (a): keep the pre-dedup sorted BAM for read-ID assignment (golden plan 4.3)
++mkdir -p "${TOP_LEVEL_OUTPUT_DIR}/retained"
++cp "$MAPPED_BAM" "${MAPPED_BAM}.bai" "${TOP_LEVEL_OUTPUT_DIR}/retained/"
+ 
+ log_message "--- Pipeline for ${SAMPLE_ID} finished successfully! ---"
+ 
+diff -ruN -x '*.sbatch' -x process.txt -x fastaprep.sh original/mpra_incell/BIDdetect.sh mpra_incell/BIDdetect.sh
+--- original/mpra_incell/BIDdetect.sh	2026-10-06 14:56:20.009082000 -0700
++++ mpra_incell/BIDdetect.sh	2026-10-06 14:59:41.773536000 -0700
+@@ -74,7 +74,7 @@
+ # --- 3. Setup Environment and Logging ---
+ 
+ # Load required modules
+-ml R
++ml R/4.2.0  # legacy-harness edit (b): pin the default R module of 2025
+ 
+ # Create output directories
+ LOG_DIR="${DEST_DIR}/logs"
+diff -ruN -x '*.sbatch' -x process.txt -x fastaprep.sh original/mpra_incell/incell_analysis.R mpra_incell/incell_analysis.R
+--- original/mpra_incell/incell_analysis.R	2026-04-17 15:29:12.595324000 -0700
++++ mpra_incell/incell_analysis.R	2026-10-06 16:07:19.032928000 -0700
+@@ -27,11 +27,11 @@
+ # Set all your analysis parameters in this section.
+ 
+ # --- 1. Global Settings ---
+-input_file      <- "BIDdetect_data.txt"
+-output_dir      <- "incell"
++input_file      <- Sys.getenv("LEGACY_INPUT", "BIDdetect_data.txt")  # legacy-harness edit (c)
++output_dir      <- Sys.getenv("LEGACY_OUTDIR", "incell")  # legacy-harness edit (c)
+ 
+ # Execution Options
+-num_cores       <- 8     # -1 for all available cores, 1 for sequential
++num_cores       <- as.integer(Sys.getenv("LEGACY_CORES", "8"))     # -1 for all available cores, 1 for sequential  # legacy-harness edit (c)
+ plot_all_sites  <- TRUE
+ sesoi           <- 0.05    # Single threshold for TOST and effect size filtering
+ 
+@@ -39,7 +39,7 @@
+ # Set to TRUE or FALSE to enable/disable entire analysis sections
+ run_wt_modification_analysis <- TRUE
+ run_pus7_dependency_analysis <- TRUE
+-run_cell_type_analysis       <- TRUE
++run_cell_type_analysis       <- as.logical(Sys.getenv("LEGACY_RUN_CELLTYPE", "TRUE"))  # legacy-harness edit (c): golden package runs FALSE (Becca 2026-10-06: cell-type analyses out of scope)
+ 
+ # --- 3. Analysis-Specific Parameters & Palettes ---
+ 
+@@ -88,7 +88,7 @@
+ missing_packages <- required_packages[!sapply(required_packages, requireNamespace, quietly = TRUE)]
+ if (length(missing_packages) > 0) {
+   cat("Installing missing packages:", paste(missing_packages, collapse = ", "), "\n")
+-  install.packages(missing_packages, repos = "http://cran.us.r-project.org")
++  stop("Missing R packages: ", paste(missing_packages, collapse = ", "), " (legacy-harness edit (b): no runtime installs on Sherlock)")
+ }
+ suppressPackageStartupMessages({lapply(required_packages, library, character.only = TRUE)})
+ cat("✓ Libraries loaded successfully.\n\n")
+diff -ruN -x '*.sbatch' -x process.txt -x fastaprep.sh original/mpra_incell/trim_map_mpra.sh mpra_incell/trim_map_mpra.sh
+--- original/mpra_incell/trim_map_mpra.sh	2026-10-06 14:56:19.984791000 -0700
++++ mpra_incell/trim_map_mpra.sh	2026-10-06 14:58:40.489403000 -0700
+@@ -219,7 +219,7 @@
+ start_time=$(date +%s)
+ log_message "  - Reverse-complementing antisense reads..."
+ 
+-$HOME/seqtk/seqtk seq -r "$ANTISENSE_TRIM1_RAW" > "$ANTISENSE_TRIM1_RC"
++"${SEQTK:-$HOME/seqtk/seqtk}" seq -r "$ANTISENSE_TRIM1_RAW" > "$ANTISENSE_TRIM1_RC"
+ track_metrics "3a_Antisense_RC" "$ANTISENSE_TRIM1_RC"
+ log_message "  - Combining all reads into a single sense-oriented stream..."
+ 
+@@ -232,7 +232,7 @@
+ log_message "Step 4: Mapping reads with Minimap2..."
+ start_time=$(date +%s)
+ 
+-$OAK/rodell/minimap2/minimap2 \
++"${MINIMAP2:-$OAK/rodell/minimap2/minimap2}" \
+     -a \
+     "$REF_FA" \
+     "$COMBINED_TRIM1" \

@@ -1,0 +1,6 @@
+# Run 20251022: pipeline defaults
+input: samplesheet_20251022.csv
+library_type: endogenous
+fasta: reference/endoG1G2.fa.gz
+bed: targets.bed
+bed_coordinates: bed0  # G1-e: targets.bed is standard 0-based

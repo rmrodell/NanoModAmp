@@ -29,6 +29,7 @@ This plan expands **WP5** of `plan.md`. Everything in `plan.md` §0 (agent rules
 - **V1 rule (G1-c):** exact for runs counted on non-deduplicated BAMs (20250418 pre-dedup, in cellulo); tolerance for dedup-counted runs (20251022, in vitro).
 - **Two reruns (D30):** `expected/legacy_rerun/` (binding) and `expected/published_rerun/` (published Figure 2/3 scripts in `dev/published/`; the paper's in-cellulo samples via the constructed pool-adapter/no-UMI variant, D29). The pool/no-UMI settings apply only to these golden in-cellulo samples; the production pipeline's defaults keep ONT trimming, UMI extraction and dedup for all data.
 - Cell-type-specific analyses are out of scope.
+- **Endogenous runs are merged at the counts level (D32):** 20250418 and 20251022 are preprocessed and counted separately (different trimming), then their count tables are merged (WT/KD vector labels, run-unique reps) for site calling. The legacy and published reruns do the same; `test_golden` uses `input_counts`.
 - **20250418 reads lack the 5′ ONT adapter (D31):** the published rerun and the new pipeline use the opt-in `ont_adapter_mode=three_prime_only` for those samples only; defaults require both adapters.
 
 ---

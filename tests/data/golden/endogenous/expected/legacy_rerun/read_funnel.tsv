@@ -1,0 +1,209 @@
+run	step	sample	file	records	size
+endo_20250418	Initial reads	293T_P36_1_BS		650	
+endo_20250418	After first trimming	293T_P36_1_BS		592	
+endo_20250418	Mapped reads	293T_P36_1_BS		599	
+endo_20250418	After deduplication	293T_P36_1_BS		254	
+endo_20250418	Initial reads	293T_P36_1_input		650	
+endo_20250418	After first trimming	293T_P36_1_input		613	
+endo_20250418	Mapped reads	293T_P36_1_input		625	
+endo_20250418	After deduplication	293T_P36_1_input		331	
+endo_20250418	Initial reads	293T_P36_3_BS		650	
+endo_20250418	After first trimming	293T_P36_3_BS		588	
+endo_20250418	Mapped reads	293T_P36_3_BS		594	
+endo_20250418	After deduplication	293T_P36_3_BS		325	
+endo_20250418	Initial reads	293T_P36_3_input		650	
+endo_20250418	After first trimming	293T_P36_3_input		613	
+endo_20250418	Mapped reads	293T_P36_3_input		618	
+endo_20250418	After deduplication	293T_P36_3_input		322	
+endo_20250418	Initial reads	293T_P97_1_BS		650	
+endo_20250418	After first trimming	293T_P97_1_BS		598	
+endo_20250418	Mapped reads	293T_P97_1_BS		602	
+endo_20250418	After deduplication	293T_P97_1_BS		298	
+endo_20250418	Initial reads	293T_P97_1_input		650	
+endo_20250418	After first trimming	293T_P97_1_input		615	
+endo_20250418	Mapped reads	293T_P97_1_input		622	
+endo_20250418	After deduplication	293T_P97_1_input		321	
+endo_20250418	Initial reads	293T_P97_3_BS		567	
+endo_20250418	After first trimming	293T_P97_3_BS		508	
+endo_20250418	Mapped reads	293T_P97_3_BS		516	
+endo_20250418	After deduplication	293T_P97_3_BS		176	
+endo_20250418	Initial reads	293T_P97_3_input		650	
+endo_20250418	After first trimming	293T_P97_3_input		607	
+endo_20250418	Mapped reads	293T_P97_3_input		615	
+endo_20250418	After deduplication	293T_P97_3_input		348	
+endo_20250418	Initial reads	HepG2_pLKO_1_BS		634	
+endo_20250418	After first trimming	HepG2_pLKO_1_BS		575	
+endo_20250418	Mapped reads	HepG2_pLKO_1_BS		581	
+endo_20250418	After deduplication	HepG2_pLKO_1_BS		298	
+endo_20250418	Initial reads	HepG2_pLKO_1_input		650	
+endo_20250418	After first trimming	HepG2_pLKO_1_input		605	
+endo_20250418	Mapped reads	HepG2_pLKO_1_input		607	
+endo_20250418	After deduplication	HepG2_pLKO_1_input		335	
+endo_20250418	Initial reads	HepG2_pLKO_3_BS		561	
+endo_20250418	After first trimming	HepG2_pLKO_3_BS		493	
+endo_20250418	Mapped reads	HepG2_pLKO_3_BS		497	
+endo_20250418	After deduplication	HepG2_pLKO_3_BS		250	
+endo_20250418	Initial reads	HepG2_pLKO_3_input		650	
+endo_20250418	After first trimming	HepG2_pLKO_3_input		611	
+endo_20250418	Mapped reads	HepG2_pLKO_3_input		614	
+endo_20250418	After deduplication	HepG2_pLKO_3_input		322	
+endo_20250418	Initial reads	HepG2_shPUS7_1_BS		650	
+endo_20250418	After first trimming	HepG2_shPUS7_1_BS		592	
+endo_20250418	Mapped reads	HepG2_shPUS7_1_BS		592	
+endo_20250418	After deduplication	HepG2_shPUS7_1_BS		253	
+endo_20250418	Initial reads	HepG2_shPUS7_1_input		650	
+endo_20250418	After first trimming	HepG2_shPUS7_1_input		615	
+endo_20250418	Mapped reads	HepG2_shPUS7_1_input		616	
+endo_20250418	After deduplication	HepG2_shPUS7_1_input		310	
+endo_20250418	Initial reads	HepG2_shPUS7_3_BS		650	
+endo_20250418	After first trimming	HepG2_shPUS7_3_BS		600	
+endo_20250418	Mapped reads	HepG2_shPUS7_3_BS		603	
+endo_20250418	After deduplication	HepG2_shPUS7_3_BS		315	
+endo_20250418	Initial reads	HepG2_shPUS7_3_input		650	
+endo_20250418	After first trimming	HepG2_shPUS7_3_input		616	
+endo_20250418	Mapped reads	HepG2_shPUS7_3_input		624	
+endo_20250418	After deduplication	HepG2_shPUS7_3_input		330	
+endo_20251022	1_Initial_FASTQ	293T_KD_1_BS	293T_KD_1_BS.fastq.gz	N/A	152K
+endo_20251022	2a_Sense_Trim1_Raw	293T_KD_1_BS	293T_KD_1_BS_sense_trim1_raw.fastq	148	512
+endo_20251022	2b_Antisense_Trim1_Raw	293T_KD_1_BS	293T_KD_1_BS_antisense_trim1_raw.fastq	131	512
+endo_20251022	3a_Antisense_RC	293T_KD_1_BS	293T_KD_1_BS_antisense_trim1_rc.fastq	131	512
+endo_20251022	3b_Combined_Trim1	293T_KD_1_BS	293T_KD_1_BS_all_sense_trim1.fastq	279	512
+endo_20251022	4_Combined_UMI	293T_KD_1_BS	293T_KD_1_BS_all_sense_umi.fastq	279	512
+endo_20251022	5_Mapped_SAM	293T_KD_1_BS	293T_KD_1_BS_mapped.sam	285	512
+endo_20251022	6_Sorted_BAM	293T_KD_1_BS	293T_KD_1_BS_mapped_sorted.bam	285	88K
+endo_20251022	7_Deduplicated_BAM	293T_KD_1_BS	293T_KD_1_BS_deduplicated.bam	115	40K
+endo_20251022	1_Initial_FASTQ	293T_KD_1_input	293T_KD_1_input.fastq.gz	N/A	156K
+endo_20251022	2a_Sense_Trim1_Raw	293T_KD_1_input	293T_KD_1_input_sense_trim1_raw.fastq	146	512
+endo_20251022	2b_Antisense_Trim1_Raw	293T_KD_1_input	293T_KD_1_input_antisense_trim1_raw.fastq	135	512
+endo_20251022	3a_Antisense_RC	293T_KD_1_input	293T_KD_1_input_antisense_trim1_rc.fastq	135	512
+endo_20251022	3b_Combined_Trim1	293T_KD_1_input	293T_KD_1_input_all_sense_trim1.fastq	281	512
+endo_20251022	4_Combined_UMI	293T_KD_1_input	293T_KD_1_input_all_sense_umi.fastq	281	512
+endo_20251022	5_Mapped_SAM	293T_KD_1_input	293T_KD_1_input_mapped.sam	282	512
+endo_20251022	6_Sorted_BAM	293T_KD_1_input	293T_KD_1_input_mapped_sorted.bam	282	84K
+endo_20251022	7_Deduplicated_BAM	293T_KD_1_input	293T_KD_1_input_deduplicated.bam	81	28K
+endo_20251022	1_Initial_FASTQ	293T_KD_2_BS	293T_KD_2_BS.fastq.gz	N/A	92K
+endo_20251022	2a_Sense_Trim1_Raw	293T_KD_2_BS	293T_KD_2_BS_sense_trim1_raw.fastq	54	512
+endo_20251022	2b_Antisense_Trim1_Raw	293T_KD_2_BS	293T_KD_2_BS_antisense_trim1_raw.fastq	83	512
+endo_20251022	3a_Antisense_RC	293T_KD_2_BS	293T_KD_2_BS_antisense_trim1_rc.fastq	83	512
+endo_20251022	3b_Combined_Trim1	293T_KD_2_BS	293T_KD_2_BS_all_sense_trim1.fastq	137	512
+endo_20251022	4_Combined_UMI	293T_KD_2_BS	293T_KD_2_BS_all_sense_umi.fastq	137	512
+endo_20251022	5_Mapped_SAM	293T_KD_2_BS	293T_KD_2_BS_mapped.sam	139	512
+endo_20251022	6_Sorted_BAM	293T_KD_2_BS	293T_KD_2_BS_mapped_sorted.bam	139	40K
+endo_20251022	7_Deduplicated_BAM	293T_KD_2_BS	293T_KD_2_BS_deduplicated.bam	63	20K
+endo_20251022	1_Initial_FASTQ	293T_KD_2_input	293T_KD_2_input.fastq.gz	N/A	156K
+endo_20251022	2a_Sense_Trim1_Raw	293T_KD_2_input	293T_KD_2_input_sense_trim1_raw.fastq	152	512
+endo_20251022	2b_Antisense_Trim1_Raw	293T_KD_2_input	293T_KD_2_input_antisense_trim1_raw.fastq	131	512
+endo_20251022	3a_Antisense_RC	293T_KD_2_input	293T_KD_2_input_antisense_trim1_rc.fastq	131	512
+endo_20251022	3b_Combined_Trim1	293T_KD_2_input	293T_KD_2_input_all_sense_trim1.fastq	283	512
+endo_20251022	4_Combined_UMI	293T_KD_2_input	293T_KD_2_input_all_sense_umi.fastq	283	512
+endo_20251022	5_Mapped_SAM	293T_KD_2_input	293T_KD_2_input_mapped.sam	283	512
+endo_20251022	6_Sorted_BAM	293T_KD_2_input	293T_KD_2_input_mapped_sorted.bam	283	84K
+endo_20251022	7_Deduplicated_BAM	293T_KD_2_input	293T_KD_2_input_deduplicated.bam	70	24K
+endo_20251022	1_Initial_FASTQ	293T_WT_1_BS	293T_WT_1_BS.fastq.gz	N/A	68K
+endo_20251022	2a_Sense_Trim1_Raw	293T_WT_1_BS	293T_WT_1_BS_sense_trim1_raw.fastq	33	512
+endo_20251022	2b_Antisense_Trim1_Raw	293T_WT_1_BS	293T_WT_1_BS_antisense_trim1_raw.fastq	42	512
+endo_20251022	3a_Antisense_RC	293T_WT_1_BS	293T_WT_1_BS_antisense_trim1_rc.fastq	42	512
+endo_20251022	3b_Combined_Trim1	293T_WT_1_BS	293T_WT_1_BS_all_sense_trim1.fastq	75	512
+endo_20251022	4_Combined_UMI	293T_WT_1_BS	293T_WT_1_BS_all_sense_umi.fastq	75	512
+endo_20251022	5_Mapped_SAM	293T_WT_1_BS	293T_WT_1_BS_mapped.sam	77	512
+endo_20251022	6_Sorted_BAM	293T_WT_1_BS	293T_WT_1_BS_mapped_sorted.bam	77	24K
+endo_20251022	7_Deduplicated_BAM	293T_WT_1_BS	293T_WT_1_BS_deduplicated.bam	28	12K
+endo_20251022	1_Initial_FASTQ	293T_WT_1_input	293T_WT_1_input.fastq.gz	N/A	100K
+endo_20251022	2a_Sense_Trim1_Raw	293T_WT_1_input	293T_WT_1_input_sense_trim1_raw.fastq	69	512
+endo_20251022	2b_Antisense_Trim1_Raw	293T_WT_1_input	293T_WT_1_input_antisense_trim1_raw.fastq	71	512
+endo_20251022	3a_Antisense_RC	293T_WT_1_input	293T_WT_1_input_antisense_trim1_rc.fastq	71	512
+endo_20251022	3b_Combined_Trim1	293T_WT_1_input	293T_WT_1_input_all_sense_trim1.fastq	140	512
+endo_20251022	4_Combined_UMI	293T_WT_1_input	293T_WT_1_input_all_sense_umi.fastq	140	512
+endo_20251022	5_Mapped_SAM	293T_WT_1_input	293T_WT_1_input_mapped.sam	142	512
+endo_20251022	6_Sorted_BAM	293T_WT_1_input	293T_WT_1_input_mapped_sorted.bam	142	44K
+endo_20251022	7_Deduplicated_BAM	293T_WT_1_input	293T_WT_1_input_deduplicated.bam	56	20K
+endo_20251022	1_Initial_FASTQ	293T_WT_2_BS	293T_WT_2_BS.fastq.gz	N/A	76K
+endo_20251022	2a_Sense_Trim1_Raw	293T_WT_2_BS	293T_WT_2_BS_sense_trim1_raw.fastq	56	512
+endo_20251022	2b_Antisense_Trim1_Raw	293T_WT_2_BS	293T_WT_2_BS_antisense_trim1_raw.fastq	49	512
+endo_20251022	3a_Antisense_RC	293T_WT_2_BS	293T_WT_2_BS_antisense_trim1_rc.fastq	49	512
+endo_20251022	3b_Combined_Trim1	293T_WT_2_BS	293T_WT_2_BS_all_sense_trim1.fastq	105	512
+endo_20251022	4_Combined_UMI	293T_WT_2_BS	293T_WT_2_BS_all_sense_umi.fastq	105	512
+endo_20251022	5_Mapped_SAM	293T_WT_2_BS	293T_WT_2_BS_mapped.sam	109	512
+endo_20251022	6_Sorted_BAM	293T_WT_2_BS	293T_WT_2_BS_mapped_sorted.bam	109	32K
+endo_20251022	7_Deduplicated_BAM	293T_WT_2_BS	293T_WT_2_BS_deduplicated.bam	46	16K
+endo_20251022	1_Initial_FASTQ	293T_WT_2_input	293T_WT_2_input.fastq.gz	N/A	116K
+endo_20251022	2a_Sense_Trim1_Raw	293T_WT_2_input	293T_WT_2_input_sense_trim1_raw.fastq	101	512
+endo_20251022	2b_Antisense_Trim1_Raw	293T_WT_2_input	293T_WT_2_input_antisense_trim1_raw.fastq	76	512
+endo_20251022	3a_Antisense_RC	293T_WT_2_input	293T_WT_2_input_antisense_trim1_rc.fastq	76	512
+endo_20251022	3b_Combined_Trim1	293T_WT_2_input	293T_WT_2_input_all_sense_trim1.fastq	177	512
+endo_20251022	4_Combined_UMI	293T_WT_2_input	293T_WT_2_input_all_sense_umi.fastq	177	512
+endo_20251022	5_Mapped_SAM	293T_WT_2_input	293T_WT_2_input_mapped.sam	179	512
+endo_20251022	6_Sorted_BAM	293T_WT_2_input	293T_WT_2_input_mapped_sorted.bam	179	56K
+endo_20251022	7_Deduplicated_BAM	293T_WT_2_input	293T_WT_2_input_deduplicated.bam	55	20K
+endo_20251022	1_Initial_FASTQ	HepG2_KD_1_BS	HepG2_KD_1_BS.fastq.gz	N/A	72K
+endo_20251022	2a_Sense_Trim1_Raw	HepG2_KD_1_BS	HepG2_KD_1_BS_sense_trim1_raw.fastq	45	512
+endo_20251022	2b_Antisense_Trim1_Raw	HepG2_KD_1_BS	HepG2_KD_1_BS_antisense_trim1_raw.fastq	51	512
+endo_20251022	3a_Antisense_RC	HepG2_KD_1_BS	HepG2_KD_1_BS_antisense_trim1_rc.fastq	51	512
+endo_20251022	3b_Combined_Trim1	HepG2_KD_1_BS	HepG2_KD_1_BS_all_sense_trim1.fastq	96	512
+endo_20251022	4_Combined_UMI	HepG2_KD_1_BS	HepG2_KD_1_BS_all_sense_umi.fastq	96	512
+endo_20251022	5_Mapped_SAM	HepG2_KD_1_BS	HepG2_KD_1_BS_mapped.sam	98	512
+endo_20251022	6_Sorted_BAM	HepG2_KD_1_BS	HepG2_KD_1_BS_mapped_sorted.bam	98	32K
+endo_20251022	7_Deduplicated_BAM	HepG2_KD_1_BS	HepG2_KD_1_BS_deduplicated.bam	39	16K
+endo_20251022	1_Initial_FASTQ	HepG2_KD_1_input	HepG2_KD_1_input.fastq.gz	N/A	148K
+endo_20251022	2a_Sense_Trim1_Raw	HepG2_KD_1_input	HepG2_KD_1_input_sense_trim1_raw.fastq	139	512
+endo_20251022	2b_Antisense_Trim1_Raw	HepG2_KD_1_input	HepG2_KD_1_input_antisense_trim1_raw.fastq	156	512
+endo_20251022	3a_Antisense_RC	HepG2_KD_1_input	HepG2_KD_1_input_antisense_trim1_rc.fastq	156	512
+endo_20251022	3b_Combined_Trim1	HepG2_KD_1_input	HepG2_KD_1_input_all_sense_trim1.fastq	295	512
+endo_20251022	4_Combined_UMI	HepG2_KD_1_input	HepG2_KD_1_input_all_sense_umi.fastq	295	512
+endo_20251022	5_Mapped_SAM	HepG2_KD_1_input	HepG2_KD_1_input_mapped.sam	295	512
+endo_20251022	6_Sorted_BAM	HepG2_KD_1_input	HepG2_KD_1_input_mapped_sorted.bam	295	88K
+endo_20251022	7_Deduplicated_BAM	HepG2_KD_1_input	HepG2_KD_1_input_deduplicated.bam	75	28K
+endo_20251022	1_Initial_FASTQ	HepG2_KD_2_BS	HepG2_KD_2_BS.fastq.gz	N/A	72K
+endo_20251022	2a_Sense_Trim1_Raw	HepG2_KD_2_BS	HepG2_KD_2_BS_sense_trim1_raw.fastq	47	512
+endo_20251022	2b_Antisense_Trim1_Raw	HepG2_KD_2_BS	HepG2_KD_2_BS_antisense_trim1_raw.fastq	47	512
+endo_20251022	3a_Antisense_RC	HepG2_KD_2_BS	HepG2_KD_2_BS_antisense_trim1_rc.fastq	47	512
+endo_20251022	3b_Combined_Trim1	HepG2_KD_2_BS	HepG2_KD_2_BS_all_sense_trim1.fastq	94	512
+endo_20251022	4_Combined_UMI	HepG2_KD_2_BS	HepG2_KD_2_BS_all_sense_umi.fastq	94	512
+endo_20251022	5_Mapped_SAM	HepG2_KD_2_BS	HepG2_KD_2_BS_mapped.sam	97	512
+endo_20251022	6_Sorted_BAM	HepG2_KD_2_BS	HepG2_KD_2_BS_mapped_sorted.bam	97	32K
+endo_20251022	7_Deduplicated_BAM	HepG2_KD_2_BS	HepG2_KD_2_BS_deduplicated.bam	43	20K
+endo_20251022	1_Initial_FASTQ	HepG2_KD_2_input	HepG2_KD_2_input.fastq.gz	N/A	152K
+endo_20251022	2a_Sense_Trim1_Raw	HepG2_KD_2_input	HepG2_KD_2_input_sense_trim1_raw.fastq	145	512
+endo_20251022	2b_Antisense_Trim1_Raw	HepG2_KD_2_input	HepG2_KD_2_input_antisense_trim1_raw.fastq	131	512
+endo_20251022	3a_Antisense_RC	HepG2_KD_2_input	HepG2_KD_2_input_antisense_trim1_rc.fastq	131	512
+endo_20251022	3b_Combined_Trim1	HepG2_KD_2_input	HepG2_KD_2_input_all_sense_trim1.fastq	276	512
+endo_20251022	4_Combined_UMI	HepG2_KD_2_input	HepG2_KD_2_input_all_sense_umi.fastq	276	512
+endo_20251022	5_Mapped_SAM	HepG2_KD_2_input	HepG2_KD_2_input_mapped.sam	278	512
+endo_20251022	6_Sorted_BAM	HepG2_KD_2_input	HepG2_KD_2_input_mapped_sorted.bam	278	84K
+endo_20251022	7_Deduplicated_BAM	HepG2_KD_2_input	HepG2_KD_2_input_deduplicated.bam	75	28K
+endo_20251022	1_Initial_FASTQ	HepG2_WT_1_BS	HepG2_WT_1_BS.fastq.gz	N/A	136K
+endo_20251022	2a_Sense_Trim1_Raw	HepG2_WT_1_BS	HepG2_WT_1_BS_sense_trim1_raw.fastq	119	512
+endo_20251022	2b_Antisense_Trim1_Raw	HepG2_WT_1_BS	HepG2_WT_1_BS_antisense_trim1_raw.fastq	130	512
+endo_20251022	3a_Antisense_RC	HepG2_WT_1_BS	HepG2_WT_1_BS_antisense_trim1_rc.fastq	130	512
+endo_20251022	3b_Combined_Trim1	HepG2_WT_1_BS	HepG2_WT_1_BS_all_sense_trim1.fastq	249	512
+endo_20251022	4_Combined_UMI	HepG2_WT_1_BS	HepG2_WT_1_BS_all_sense_umi.fastq	249	512
+endo_20251022	5_Mapped_SAM	HepG2_WT_1_BS	HepG2_WT_1_BS_mapped.sam	256	512
+endo_20251022	6_Sorted_BAM	HepG2_WT_1_BS	HepG2_WT_1_BS_mapped_sorted.bam	256	76K
+endo_20251022	7_Deduplicated_BAM	HepG2_WT_1_BS	HepG2_WT_1_BS_deduplicated.bam	107	40K
+endo_20251022	1_Initial_FASTQ	HepG2_WT_1_input	HepG2_WT_1_input.fastq.gz	N/A	144K
+endo_20251022	2a_Sense_Trim1_Raw	HepG2_WT_1_input	HepG2_WT_1_input_sense_trim1_raw.fastq	150	512
+endo_20251022	2b_Antisense_Trim1_Raw	HepG2_WT_1_input	HepG2_WT_1_input_antisense_trim1_raw.fastq	124	512
+endo_20251022	3a_Antisense_RC	HepG2_WT_1_input	HepG2_WT_1_input_antisense_trim1_rc.fastq	124	512
+endo_20251022	3b_Combined_Trim1	HepG2_WT_1_input	HepG2_WT_1_input_all_sense_trim1.fastq	274	512
+endo_20251022	4_Combined_UMI	HepG2_WT_1_input	HepG2_WT_1_input_all_sense_umi.fastq	274	512
+endo_20251022	5_Mapped_SAM	HepG2_WT_1_input	HepG2_WT_1_input_mapped.sam	274	512
+endo_20251022	6_Sorted_BAM	HepG2_WT_1_input	HepG2_WT_1_input_mapped_sorted.bam	274	80K
+endo_20251022	7_Deduplicated_BAM	HepG2_WT_1_input	HepG2_WT_1_input_deduplicated.bam	89	28K
+endo_20251022	1_Initial_FASTQ	HepG2_WT_2_BS	HepG2_WT_2_BS.fastq.gz	N/A	124K
+endo_20251022	2a_Sense_Trim1_Raw	HepG2_WT_2_BS	HepG2_WT_2_BS_sense_trim1_raw.fastq	126	512
+endo_20251022	2b_Antisense_Trim1_Raw	HepG2_WT_2_BS	HepG2_WT_2_BS_antisense_trim1_raw.fastq	96	512
+endo_20251022	3a_Antisense_RC	HepG2_WT_2_BS	HepG2_WT_2_BS_antisense_trim1_rc.fastq	96	512
+endo_20251022	3b_Combined_Trim1	HepG2_WT_2_BS	HepG2_WT_2_BS_all_sense_trim1.fastq	222	512
+endo_20251022	4_Combined_UMI	HepG2_WT_2_BS	HepG2_WT_2_BS_all_sense_umi.fastq	222	512
+endo_20251022	5_Mapped_SAM	HepG2_WT_2_BS	HepG2_WT_2_BS_mapped.sam	226	512
+endo_20251022	6_Sorted_BAM	HepG2_WT_2_BS	HepG2_WT_2_BS_mapped_sorted.bam	226	68K
+endo_20251022	7_Deduplicated_BAM	HepG2_WT_2_BS	HepG2_WT_2_BS_deduplicated.bam	81	28K
+endo_20251022	1_Initial_FASTQ	HepG2_WT_2_input	HepG2_WT_2_input.fastq.gz	N/A	132K
+endo_20251022	2a_Sense_Trim1_Raw	HepG2_WT_2_input	HepG2_WT_2_input_sense_trim1_raw.fastq	109	512
+endo_20251022	2b_Antisense_Trim1_Raw	HepG2_WT_2_input	HepG2_WT_2_input_antisense_trim1_raw.fastq	123	512
+endo_20251022	3a_Antisense_RC	HepG2_WT_2_input	HepG2_WT_2_input_antisense_trim1_rc.fastq	123	512
+endo_20251022	3b_Combined_Trim1	HepG2_WT_2_input	HepG2_WT_2_input_all_sense_trim1.fastq	232	512
+endo_20251022	4_Combined_UMI	HepG2_WT_2_input	HepG2_WT_2_input_all_sense_umi.fastq	232	512
+endo_20251022	5_Mapped_SAM	HepG2_WT_2_input	HepG2_WT_2_input_mapped.sam	234	512
+endo_20251022	6_Sorted_BAM	HepG2_WT_2_input	HepG2_WT_2_input_mapped_sorted.bam	234	72K
+endo_20251022	7_Deduplicated_BAM	HepG2_WT_2_input	HepG2_WT_2_input_deduplicated.bam	87	32K

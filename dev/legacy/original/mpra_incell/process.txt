@@ -1,0 +1,58 @@
+Step 0: Fastq's
+
+The original fastq_pass folders are empty on OAK, just have the stitched together fastqs (whatdidyoudoooooo)
+even some of the pod5 files are missing ohmygoooodddddddddddd
+
+/oak/stanford/groups/nicolemm/rodell/BIDamplicon/20241114_pool1/fastq
+^ these have already been renamed from the barcode
+
+Create links to them (create_links.sh) and make a barcode.txt file to trick the script into working.
+
+Step 1: trim_map.sh
+
+NO deduplication
+
+bash $HOME/BIDamplicon/pipeline/submit_file_prep.sh \
+    -u rodell@stanford.edu -t 4:00:00 \
+    -s /home/users/rodell/BIDamplicon/pipeline/trim_map_mpra.sh \
+    -a /scratch/users/rodell/20251106_pool1/incell/barcodes.txt \
+    -i /oak/stanford/groups/nicolemm/rodell/BIDamplicon/20241114_pool1/fastq \
+    -o /scratch/users/rodell/20251106_pool1/incell/prep \
+    -r /home/groups/nicolemm/rodell/pool1/pool1_cleaned_noadapters.fasta
+
+--- Preparing SLURM Job Array Submission ---
+  CPUs per Task:    16
+  Memory per Task:  32G
+  Time Limit:       4:00:00
+  Partition:        normal
+  Notify Email:     rodell@stanford.edu
+  Pipeline Script:  /home/users/rodell/BIDamplicon/pipeline/trim_map_mpra.sh
+  Sample Map:       /scratch/users/rodell/20251106_pool1/incell/barcodes.txt
+  FASTQ Source Dir: /oak/stanford/groups/nicolemm/rodell/BIDamplicon/20241114_pool1/fastq
+  Output Dir:       /scratch/users/rodell/20251106_pool1/incell/prep
+  Reference Fasta:  /home/groups/nicolemm/rodell/pool1/pool1_cleaned_noadapters.fasta
+---------------------------------------------
+SLURM output/error logs will be saved in: /scratch/users/rodell/20251106_pool1/incell/prep/slurm_logs
+Found 66 samples to process.
+Submitting array job...
+Submitted batch job 9256680
+--- Job array submitted successfully! ---
+
+Step 2: BIDdetect.sh
+
+Run as an sbatch script: count.sbatch
+
+bash $HOME/BIDamplicon/pipeline/BIDdetect.sh \
+  --bam_dir /scratch/users/rodell/20251106_pool1/incell/prep/final_bam \
+  --output_dir /scratch/users/rodell/20251106_pool1/incell/counts_delpos \
+  --ref_fasta /home/groups/nicolemm/rodell/pool1/pool1_cleaned_noadapters.fasta \
+  --bed_file /home/groups/nicolemm/rodell/pool1/pool1_cleaned_delpos_noadapters.bed
+
+bash $HOME/BIDamplicon/pipeline/BIDdetect.sh \
+  --bam_dir /scratch/users/rodell/20251106_pool1/incell/prep/final_bam \
+  --output_dir /scratch/users/rodell/20251106_pool1/incell/counts_full \
+  --ref_fasta /home/groups/nicolemm/rodell/pool1/pool1_cleaned_noadapters.fasta \
+  --bed_file /home/groups/nicolemm/rodell/pool1/pool1_cleaned_full_noadapters.bed
+
+Submitted batch job 9276805 --> counts_delpos
+Submitted batch job 9287672 --> full

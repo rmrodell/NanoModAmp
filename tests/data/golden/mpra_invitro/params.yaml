@@ -1,0 +1,7 @@
+# Figure 3 in vitro (May run): pipeline defaults
+input: samplesheet.csv
+library_type: mpra
+fasta: reference/pool1.fa.gz
+bed: targets.bed
+analyses: analyses.yaml
+bed_coordinates: bed0  # G1-e: targets.bed is standard 0-based

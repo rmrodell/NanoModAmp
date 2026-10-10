@@ -1,0 +1,17 @@
+sample_id,fastq,treat,rep,celltype,vector,run,notes
+293T_KD_0418r1_BS,fastq/293T_KD_0418r1_BS.fastq.gz,BS,0418r1,293T,KD,20250418,original sample 293T_P97_1_BS (run 20250418); vector P97 -> KD
+293T_KD_0418r1_input,fastq/293T_KD_0418r1_input.fastq.gz,input,0418r1,293T,KD,20250418,original sample 293T_P97_1_input (run 20250418); vector P97 -> KD
+293T_KD_0418r3_BS,fastq/293T_KD_0418r3_BS.fastq.gz,BS,0418r3,293T,KD,20250418,original sample 293T_P97_3_BS (run 20250418); vector P97 -> KD
+293T_KD_0418r3_input,fastq/293T_KD_0418r3_input.fastq.gz,input,0418r3,293T,KD,20250418,original sample 293T_P97_3_input (run 20250418); vector P97 -> KD
+293T_WT_0418r1_BS,fastq/293T_WT_0418r1_BS.fastq.gz,BS,0418r1,293T,WT,20250418,original sample 293T_P36_1_BS (run 20250418); vector P36 -> WT
+293T_WT_0418r1_input,fastq/293T_WT_0418r1_input.fastq.gz,input,0418r1,293T,WT,20250418,original sample 293T_P36_1_input (run 20250418); vector P36 -> WT
+293T_WT_0418r3_BS,fastq/293T_WT_0418r3_BS.fastq.gz,BS,0418r3,293T,WT,20250418,original sample 293T_P36_3_BS (run 20250418); vector P36 -> WT
+293T_WT_0418r3_input,fastq/293T_WT_0418r3_input.fastq.gz,input,0418r3,293T,WT,20250418,original sample 293T_P36_3_input (run 20250418); vector P36 -> WT
+HepG2_KD_0418r1_BS,fastq/HepG2_KD_0418r1_BS.fastq.gz,BS,0418r1,HepG2,KD,20250418,original sample HepG2_shPUS7_1_BS (run 20250418); vector shPUS7 -> KD
+HepG2_KD_0418r1_input,fastq/HepG2_KD_0418r1_input.fastq.gz,input,0418r1,HepG2,KD,20250418,original sample HepG2_shPUS7_1_input (run 20250418); vector shPUS7 -> KD
+HepG2_KD_0418r3_BS,fastq/HepG2_KD_0418r3_BS.fastq.gz,BS,0418r3,HepG2,KD,20250418,original sample HepG2_shPUS7_3_BS (run 20250418); vector shPUS7 -> KD
+HepG2_KD_0418r3_input,fastq/HepG2_KD_0418r3_input.fastq.gz,input,0418r3,HepG2,KD,20250418,original sample HepG2_shPUS7_3_input (run 20250418); vector shPUS7 -> KD
+HepG2_WT_0418r1_BS,fastq/HepG2_WT_0418r1_BS.fastq.gz,BS,0418r1,HepG2,WT,20250418,original sample HepG2_pLKO_1_BS (run 20250418); vector pLKO -> WT
+HepG2_WT_0418r1_input,fastq/HepG2_WT_0418r1_input.fastq.gz,input,0418r1,HepG2,WT,20250418,original sample HepG2_pLKO_1_input (run 20250418); vector pLKO -> WT
+HepG2_WT_0418r3_BS,fastq/HepG2_WT_0418r3_BS.fastq.gz,BS,0418r3,HepG2,WT,20250418,original sample HepG2_pLKO_3_BS (run 20250418); vector pLKO -> WT
+HepG2_WT_0418r3_input,fastq/HepG2_WT_0418r3_input.fastq.gz,input,0418r3,HepG2,WT,20250418,original sample HepG2_pLKO_3_input (run 20250418); vector pLKO -> WT

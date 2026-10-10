@@ -1,0 +1,51 @@
+--- Script Started ---
+Analysis Date: 2026-10-06 20:18:47.686103 
+
+--- Parameters ---
+Input Data File: /scratch/users/rodell/NanoModAmp_build/golden/v2/mpra_invitro/counts/BIDdetect_data.txt 
+Output Directory: /scratch/users/rodell/NanoModAmp_build/golden/v2/site_calls/mpra_invitro/invitro 
+Analysis Prefix: invitro 
+SESOI: 0.05 
+Modified Color: #c154c1 
+Plot All Individual Sites: TRUE 
+------------------
+
+--- Loading and Validating Input Data ---
+Input data loaded and validated successfully.
+Standardized input data saved.
+
+--- Analysis Started ---
+Using SESOI and Low Rate Threshold: 0.05 
+Initial analysis on 6 unique sites.
+
+2 sites were filtered out as 'Unmodified' (all rates < 0.05 ).
+4 sites remain for statistical modeling.
+Setting up parallel backend with 8 cores...
+
+--- Final Summary of Site Categories ---
+
+Inconclusive     Modified   Unmodified 
+           1            3            2 
+
+Complete analysis summary saved to: /scratch/users/rodell/NanoModAmp_build/golden/v2/site_calls/mpra_invitro/invitro/data_summary/invitro_modification_significance.tsv 
+
+--- Summary of Delta Deletion Rate for Modified Sites ---
+# A tibble: 1 × 5
+  n_sites mean_delta_delrate sd_delta_delrate min_delta_delrate
+    <int>              <dbl>            <dbl>             <dbl>
+1       3              0.377            0.287            0.0989
+  max_delta_delrate
+              <dbl>
+1             0.673
+
+--- Quartile Analysis Skipped: Not enough modified sites ( 3 ) ---
+
+--- Plotting Results ---
+Plots will be saved to: /scratch/users/rodell/NanoModAmp_build/golden/v2/site_calls/mpra_invitro/invitro/plots 
+Generating plot for all individual sites... (this may take a while)
+All sites plot saved to PDF.
+Summary boxplot of modified sites saved.
+Summary heatmap without labels saved.
+Summary heatmap with labels saved.
+
+--- Script Finished Successfully ---

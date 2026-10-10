@@ -1,0 +1,7 @@
+# Run 20250418: reads lack the 5' ONT adapter -> opt-in 3'-only trim for THESE samples only (D31, R-29)
+input: samplesheet_20250418.csv
+library_type: endogenous
+fasta: reference/endoG1G2.fa.gz
+bed: targets.bed
+bed_coordinates: bed0  # G1-e: targets.bed is standard 0-based
+ont_adapter_mode: three_prime_only

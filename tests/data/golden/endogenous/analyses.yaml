@@ -1,0 +1,54 @@
+# Figure 2 endogenous under the Figure 3 method (D13), on the merged counts of runs 20250418 + 20251022 (D32).
+# Reps are run-unique (0418r1, 1022r2, ...); batch pairing holds within a run (D17).
+# Random effects (Becca, 2026-10-09, D33): replicate (1|rep), always in the model, plus (1|celltype) when both cell types are analysed together.
+analyses:
+  - name: WT_mod_HepG2
+    type: treatment
+    subset: {celltype: [HepG2], vector: [WT]}
+    random_effects: ""
+    sesoi: 0.05
+    fdr: 0.05
+  - name: WT_mod_293T
+    type: treatment
+    subset: {celltype: [293T], vector: [WT]}
+    random_effects: ""
+    sesoi: 0.05
+    fdr: 0.05
+  - name: WT_mod_Both
+    type: treatment
+    subset: {celltype: [HepG2, 293T], vector: [WT]}
+    random_effects: "(1|celltype)"
+    sesoi: 0.05
+    fdr: 0.05
+  - name: PUS7_dep_HepG2_WT_v_KD
+    type: factor
+    subset: {celltype: [HepG2], vector: [KD, WT]}
+    factor: vector
+    levels: [KD, WT]
+    random_effects: ""
+    direction: positive
+    sesoi: 0.05
+    fdr: 0.05
+  - name: PUS7_dep_293T_WT_v_KD
+    type: factor
+    subset: {celltype: [293T], vector: [KD, WT]}
+    factor: vector
+    levels: [KD, WT]
+    random_effects: ""
+    direction: positive
+    sesoi: 0.05
+    fdr: 0.05
+  - name: PUS7_dep_Both_WT_v_KD
+    type: factor
+    subset: {celltype: [HepG2, 293T], vector: [KD, WT]}
+    factor: vector
+    levels: [KD, WT]
+    random_effects: "(1|celltype)"
+    direction: positive
+    sesoi: 0.05
+    fdr: 0.05
+site_sets:
+  - name: PUS7_dep_union
+    op: union
+    of: [PUS7_dep_HepG2_WT_v_KD, PUS7_dep_293T_WT_v_KD, PUS7_dep_Both_WT_v_KD]
+    quartiles_by: {analysis: WT_mod_Both, column: delta_delrate}

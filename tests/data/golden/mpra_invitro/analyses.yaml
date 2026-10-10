@@ -1,0 +1,10 @@
+# Figure 3 in vitro (modification_analysis.R). noPUS samples are treat=input (D14).
+analyses:
+  - name: invitro
+    type: treatment
+    subset: {celltype: [IV]}
+    random_effects: ""
+    sesoi: 0.05
+    fdr: 0.05
+    plot_all_sites: true
+    colors: {modified: "#c154c1", input: "#eee8aa"}
