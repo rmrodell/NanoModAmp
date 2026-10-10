@@ -111,10 +111,13 @@ jobs:
           python-version: "3.12"
       - name: Run pytest
         run: |
-          if ls tests/simulate/test_*.py dev/**/test_*.py >/dev/null 2>&1; then
+          dirs=$(for d in tests/simulate dev; do { ls $d/test_*.py || ls $d/*/test_*.py; } >/dev/null 2>&1 && echo $d; done)
+          if [ -n "$dirs" ]; then
             pip install pytest
             [ -f tests/simulate/requirements.txt ] && pip install -r tests/simulate/requirements.txt
-            pytest -q tests/simulate dev
+            # minimap2 lets tests/simulate/test_tools.py check the simulator's mapping assumptions
+            { sudo apt-get update -qq && sudo apt-get install -y -qq minimap2; } >/dev/null || echo "minimap2 unavailable; test_tools.py will skip"
+            pytest -q $dirs
           else
             echo "No Python tests yet (WP1); nothing to test."
           fi

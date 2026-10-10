@@ -1,0 +1,134 @@
+# Synthetic Nano-BID-Amp design for the WP1 simulator (plan §7 WP1).
+# Regenerate tests/data/synthetic/ with:
+#   python tests/simulate/simulate.py --design tests/simulate/design.yaml --outdir tests/data/synthetic
+#
+# Deletion counts are exact by design: for each (sample, site) the number of deleted molecules is
+# round(p * n_molecules) after the rep multiplier, so expected delrates are known without noise.
+
+seed: 20261009
+quality_char: "I"          # Phred 40 everywhere (error model off)
+error_model: none          # "badread" is reserved for a future optional mode (not implemented)
+
+adapters:
+  ont_sense_5p: TTTCTGTTGGTGCTGATATTGCG
+  ont_sense_3p: GAAGATAGAGCGACAGGCAAGT
+  pool_5p: GACGCTCTTCCGATCT
+  pool_3p: CACTCGGGCACCAAGGAC
+umi_length: 10
+min_umi_hamming: 3          # between molecules of one (sample, target); a 1-mismatch copy stays within 1 of its parent
+
+# Trimming / filtering settings the truth is computed for (plan §3 defaults)
+pipeline:
+  trim1_min_length: 125
+  trim2_min_length: 120
+  min_coverage: 20          # sites kept when totalReads > min_coverage
+
+# Per-site behaviour. p_del / p_ins / p_sub are per treat; BS may be split by vector.
+# A list gives one value per rep (no rep multiplier applied).
+# expected: categories that are clear-cut by design (others are written as "-").
+site_types:
+  PUS7DEP:
+    p_del: {input: 0.02, BS: {WT: 0.45, KD: 0.08}}
+    expected: {treatment: Modified, factor: significant}
+  INDEP:
+    p_del: {input: 0.02, BS: {WT: 0.40, KD: 0.40}}
+    expected: {treatment: Modified, factor: not_significant}
+  UNMOD:
+    p_del: {input: 0.025, BS: 0.025}
+    p_sub: {input: 0.025, BS: 0.025}
+    expected: {treatment: Unmodified, factor: not_significant}
+  INPUT_ZERO:               # D25: equivalence bound infinite when mean input delrate = 0
+    p_del: {input: 0.0, BS: {WT: 0.30, KD: 0.30}}
+    expected: {}
+  INS:                      # insertion right after the T (D9: counted in totalReads)
+    p_del: {input: 0.0, BS: 0.025}
+    p_ins: {input: 0.10, BS: 0.10}
+    expected: {treatment: Unmodified, factor: not_significant}
+  LOWCOV:                   # 20 vs 21 molecules: boundary of totalReads > 20
+    p_del: {input: 0.0, BS: 0.0}
+    expected: {}
+  NOISY:                    # low coverage, rep-inconsistent effect
+    p_del: {input: 0.02, BS: [0.15, 0.04]}
+    expected: {}
+
+references:
+  endo:
+    seed_offset: 1
+    targets:
+      - {name: AMP1, gene: GENEA, length: 220, sites: [{pos: 60, type: PUS7DEP}, {pos: 170, type: UNMOD}]}
+      - {name: AMP2, gene: GENEB, length: 240, sites: [{pos: 90, type: INDEP}]}
+      - {name: AMP3, gene: GENEC, length: 260, sites: [{pos: 70, type: INPUT_ZERO}, {pos: 150, type: INS}]}
+      - {name: AMP4, gene: GENED, length: 280, sites: [{pos: 100, type: LOWCOV}]}
+      - {name: AMP5, gene: GENEE, length: 300, sites: [{pos: 120, type: UNMOD}, {pos: 200, type: NOISY}]}
+  mpra:
+    seed_offset: 2
+    targets:
+      - {name: OLIGO01, gene: OLIGO01, length: 130, sites: [{pos: 60, type: PUS7DEP}]}
+      - {name: OLIGO02, gene: OLIGO02, length: 130, sites: [{pos: 55, type: PUS7DEP}]}
+      - {name: OLIGO03, gene: OLIGO03, length: 130, sites: [{pos: 65, type: PUS7DEP}]}
+      - {name: OLIGO04, gene: OLIGO04, length: 130, sites: [{pos: 70, type: PUS7DEP}]}
+      - {name: OLIGO05, gene: OLIGO05, length: 130, sites: [{pos: 60, type: INDEP}]}
+      - {name: OLIGO06, gene: OLIGO06, length: 130, sites: [{pos: 58, type: INDEP}]}
+      - {name: OLIGO07, gene: OLIGO07, length: 130, sites: [{pos: 62, type: INDEP}]}
+      - {name: OLIGO08, gene: OLIGO08, length: 130, sites: [{pos: 66, type: INDEP}]}
+      - {name: OLIGO09, gene: OLIGO09, length: 130, sites: [{pos: 60, type: UNMOD}]}
+      - {name: OLIGO10, gene: OLIGO10, length: 130, sites: [{pos: 50, type: UNMOD}]}
+      - {name: OLIGO11, gene: OLIGO11, length: 130, sites: [{pos: 75, type: UNMOD}]}
+      - {name: OLIGO12, gene: OLIGO12, length: 130, sites: [{pos: 64, type: UNMOD}]}
+      - {name: OLIGO13, gene: OLIGO13, length: 130, sites: [{pos: 60, type: INPUT_ZERO}]}
+      - {name: OLIGO14, gene: OLIGO14, length: 130, sites: [{pos: 68, type: INPUT_ZERO}]}
+      - {name: OLIGO15, gene: OLIGO15, length: 130, sites: [{pos: 60, type: INS}]}
+      - {name: OLIGO16, gene: OLIGO16, length: 130, sites: [{pos: 57, type: INS}]}
+      - {name: OLIGO17, gene: OLIGO17, length: 130, sites: [{pos: 60, type: LOWCOV}]}
+      - {name: OLIGO18, gene: OLIGO18, length: 130, sites: [{pos: 63, type: NOISY}]}
+      # Near-identical pair: NEARDUP_B = NEARDUP_A + one trailing base, so reads from A align
+      # equally well to both (MAPQ 0). Only multimapper reads come from this pair.
+      - {name: NEARDUP_A, gene: NEARDUP, length: 130, sites: [], near_duplicate_of: null}
+      - {name: NEARDUP_B, gene: NEARDUP, length: 131, sites: [], near_duplicate_of: NEARDUP_A}
+
+# Per-experiment library layout. Modes follow nextflow_schema.json (D29, D31).
+experiments:
+  endogenous:
+    reference: endo
+    params: {library_type: endogenous, orientation_adapters: ont, ont_adapter_mode: linked, umi: true}
+    samples: {celltype: SIM, vector: [WT, KD], treat: [input, BS], rep: [1, 2]}
+    molecules_per_target: 40
+    molecules_override: {AMP4: {1: 20, 2: 21}, AMP5: 30}
+    copies: {1: 0.4, 2: 0.35, 3: 0.25}
+    umi_mismatch_fraction: 0.5        # of molecules with >= 3 copies: one copy carries a 1-mismatch UMI
+    rep_multiplier: {1: 1.0, 2: 0.85}
+    junk: {no_adapter: 6, one_adapter_5p: 4, one_adapter_3p: 4, too_short: 5, adapter_dimer: 3, unmappable: 4, chimera: 4}
+    analyses: [treatment, factor]
+  mpra:
+    reference: mpra
+    params: {library_type: mpra, orientation_adapters: ont, ont_adapter_mode: linked, umi: true}
+    samples: {celltype: SIM, vector: [WT, KD], treat: [input, BS], rep: [1, 2]}
+    molecules_per_target: 30
+    molecules_override: {OLIGO17: {1: 20, 2: 21}, OLIGO18: 24, NEARDUP_A: 8, NEARDUP_B: 0}
+    copies: {1: 0.4, 2: 0.35, 3: 0.25}
+    umi_mismatch_fraction: 0.5
+    rep_multiplier: {1: 1.0, 2: 0.85}
+    junk: {no_adapter: 6, one_adapter_5p: 4, one_adapter_3p: 4, too_short: 5, short_pool: 4, adapter_dimer: 3, unmappable: 4, chimera: 4}
+    analyses: [treatment, factor]
+  legacy_pool_noumi:          # D29 opt-in: pool adapters only, no UMI (like paper run 20241114)
+    reference: mpra
+    params: {library_type: mpra, orientation_adapters: pool, ont_adapter_mode: linked, umi: false}
+    samples: {celltype: SIM, vector: [WT], treat: [input, BS], rep: [1, 2]}
+    molecules_per_target: 20
+    molecules_override: {NEARDUP_A: 6, NEARDUP_B: 0}
+    copies: {1: 0.6, 2: 0.3, 3: 0.1}
+    umi_mismatch_fraction: 0.0
+    rep_multiplier: {1: 1.0, 2: 0.85}
+    junk: {no_adapter: 4, one_adapter_5p: 3, too_short: 3, adapter_dimer: 2, unmappable: 3, chimera: 3}
+    analyses: [treatment]
+  legacy_3prime:              # D31 opt-in: no 5' ONT adapter (like paper run 20250418)
+    reference: endo
+    params: {library_type: endogenous, orientation_adapters: ont, ont_adapter_mode: three_prime_only, umi: true}
+    samples: {celltype: SIM, vector: [WT], treat: [input, BS], rep: [1, 2]}
+    molecules_per_target: 30
+    molecules_override: {}
+    copies: {1: 0.4, 2: 0.35, 3: 0.25}
+    umi_mismatch_fraction: 0.5
+    rep_multiplier: {1: 1.0, 2: 0.85}
+    junk: {no_adapter: 4, too_short: 4, adapter_dimer: 3, unmappable: 3}
+    analyses: [treatment]

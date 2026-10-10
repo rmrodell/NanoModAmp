@@ -1,0 +1,10 @@
+# From the repo root: nextflow run . -profile docker -params-file tests/data/synthetic/mpra/params.yaml
+input: tests/data/synthetic/mpra/samplesheet.csv
+fasta: tests/data/synthetic/reference/mpra.fa
+bed: tests/data/synthetic/reference/mpra.sites.bed
+bed_coordinates: bed0
+library_type: mpra
+orientation_adapters: ont
+ont_adapter_mode: linked
+umi: true
+analyses: tests/data/synthetic/mpra/analyses.yaml

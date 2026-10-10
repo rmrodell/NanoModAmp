@@ -1,0 +1,10 @@
+# From the repo root: nextflow run . -profile docker -params-file tests/data/synthetic/legacy_3prime/params.yaml
+input: tests/data/synthetic/legacy_3prime/samplesheet.csv
+fasta: tests/data/synthetic/reference/endo.fa
+bed: tests/data/synthetic/reference/endo.sites.bed
+bed_coordinates: bed0
+library_type: endogenous
+orientation_adapters: ont
+ont_adapter_mode: three_prime_only
+umi: true
+analyses: tests/data/synthetic/legacy_3prime/analyses.yaml

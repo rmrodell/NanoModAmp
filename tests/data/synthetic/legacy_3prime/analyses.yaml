@@ -1,0 +1,8 @@
+# Synthetic analyses (plan §5.4); expected calls in truth/categories.tsv
+analyses:
+  - name: WT_mod
+    type: treatment
+    subset: {vector: [WT]}
+    random_effects: ""
+    sesoi: 0.05
+    fdr: 0.05
