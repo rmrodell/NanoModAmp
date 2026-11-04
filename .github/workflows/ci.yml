@@ -93,6 +93,11 @@ jobs:
         with:
           working-directory: R/nanomodamp
           extra-packages: any::testthat, any::devtools
+      - name: Install nanomodamp
+        # parallel-worker tests (1 vs N workers) start separate R processes that call
+        # library(nanomodamp), so the package must be installed, not only load_all()-ed
+        if: steps.pkg.outputs.present == 'true'
+        run: R CMD INSTALL R/nanomodamp
       - name: Run testthat
         if: steps.pkg.outputs.present == 'true'
         run: Rscript -e 'devtools::test("R/nanomodamp", stop_on_failure = TRUE)'
