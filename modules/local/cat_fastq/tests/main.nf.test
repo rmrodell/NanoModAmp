@@ -57,7 +57,8 @@ nextflow_process {
         then {
             assertAll(
                 { assert process.failed },
-                { assert process.stderr.any { l -> l.contains("contains no *.fastq.gz files") } }
+                // the task's error report ("Command error:") is in Nextflow's stdout, not its stderr
+                { assert (process.stdout + process.stderr).any { l -> l.contains("contains no *.fastq.gz files") } }
             )
         }
     }

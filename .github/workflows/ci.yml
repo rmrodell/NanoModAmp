@@ -111,7 +111,8 @@ jobs:
           python-version: "3.12"
       - name: Run pytest
         run: |
-          dirs=$(for d in tests/simulate dev; do { ls $d/test_*.py || ls $d/*/test_*.py; } >/dev/null 2>&1 && echo $d; done)
+          # `if`, not `&&`: under bash -e a non-matching last directory must not fail the step
+          dirs=$(for d in tests/simulate dev; do if { ls $d/test_*.py || ls $d/*/test_*.py; } >/dev/null 2>&1; then echo $d; fi; done)
           if [ -n "$dirs" ]; then
             pip install pytest
             [ -f tests/simulate/requirements.txt ] && pip install -r tests/simulate/requirements.txt
