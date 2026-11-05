@@ -2,3 +2,5 @@
 *.nf.test linguist-language=nextflow
 modules/nf-core/** linguist-generated
 subworkflows/nf-core/** linguist-generated
+# Vendored legacy scripts must stay byte-identical (incell_analysis.R has CRLF line endings)
+R/nanomodamp/tests/testthat/fixtures/legacy_equivalence/legacy_scripts/* -text
