@@ -6,7 +6,7 @@
 process MERGE_COUNT_TABLES {
     label 'process_single'
 
-    container 'docker.io/library/ubuntu:22.04' // TODO(WP3): nanomodamp-r image from containers/nanomodamp-r (not yet built/pushed)
+    container 'ghcr.io/rmrodell/nanomodamp-r:0.1.0' // pinned R 4.3.2 / Bioconductor 3.18 image (containers/nanomodamp-r)
 
     input:
     path tables, stageAs: 'tables/??/*'

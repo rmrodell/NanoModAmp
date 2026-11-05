@@ -3,8 +3,7 @@
 process SITE_SETS {
     label 'process_single'
 
-    // placeholder until the nanomodamp-r container is published
-    container 'docker.io/library/ubuntu:22.04'
+    container 'ghcr.io/rmrodell/nanomodamp-r:0.1.0' // pinned R 4.3.2 / Bioconductor 3.18 image (containers/nanomodamp-r)
 
     input:
     path calling_dirs, stageAs: 'calling/*'
