@@ -12,6 +12,10 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+  packages: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -50,6 +54,12 @@ jobs:
       - uses: nf-core/setup-nextflow@893c28b667aedeba26e37f296d260ccc5bc4d914 # v3
         with:
           version: ${{ matrix.NXF_VER }}
+      - uses: docker/login-action@v3
+        # R modules use ghcr.io/rmrodell/nanomodamp-r (private until made public on GitHub)
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Write params file
         run: printf '%s\n' "${{ matrix.mode.params || '{}' }}" > params.yml
       - name: Run pipeline in stub mode
@@ -68,6 +78,12 @@ jobs:
       - uses: nf-core/setup-nf-test@4069fbbaabe94c08faba4ad261bfa88225ba133f # v2
         with:
           version: ${{ env.NFT_VER }}
+      - uses: docker/login-action@v3
+        # R modules use ghcr.io/rmrodell/nanomodamp-r (private until made public on GitHub)
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Run nf-test
         run: nf-test test --profile=+docker --verbose --junitxml=TEST-nf-test.xml
       - name: Publish test report
@@ -78,32 +94,26 @@ jobs:
           path: TEST-nf-test.xml
 
   r-testthat:
-    # nanomodamp R package (WP3, WP4); skipped until R/nanomodamp exists
+    # nanomodamp R package (WP3, WP4), run inside the pinned R image (containers/nanomodamp-r,
+    # published by container.yml) so results match the Sherlock reference environment (R-24).
+    # The checked-out package is installed over the image's copy before testing.
     name: "R testthat"
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/rmrodell/nanomodamp-r:0.1.0
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - name: Check for R package
-        id: pkg
-        run: echo "present=$([ -f R/nanomodamp/DESCRIPTION ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-      - uses: r-lib/actions/setup-r@v2
-        if: steps.pkg.outputs.present == 'true'
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        if: steps.pkg.outputs.present == 'true'
-        with:
-          working-directory: R/nanomodamp
-          extra-packages: any::testthat, any::devtools
       - name: Install nanomodamp
         # parallel-worker tests (1 vs N workers) start separate R processes that call
         # library(nanomodamp), so the package must be installed, not only load_all()-ed
-        if: steps.pkg.outputs.present == 'true'
         run: R CMD INSTALL R/nanomodamp
       - name: Run testthat
-        if: steps.pkg.outputs.present == 'true'
-        run: Rscript -e 'devtools::test("R/nanomodamp", stop_on_failure = TRUE)'
-      - name: No R package yet
-        if: steps.pkg.outputs.present != 'true'
-        run: echo "R/nanomodamp not present yet (WP3/WP4); nothing to test."
+        run: >-
+          Rscript -e 'testthat::test_dir("R/nanomodamp/tests/testthat", package = "nanomodamp",
+          load_package = "installed", stop_on_failure = TRUE)'
 
   pytest:
     # simulator (WP1) and dev/ helpers; skipped until Python tests exist

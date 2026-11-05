@@ -13,6 +13,7 @@ Plan: [plan.md](plan.md) · Decisions: [docs/DECISIONS.md](docs/DECISIONS.md) ·
 | WP6 Documentation | — | Started in WP0 | `docs/usage.md` legacy-library section, `docs/methods.md` stub |
 | WP7 Integration | — | Blocked on WP1–WP6 | Compares against `legacy_rerun`, `published_rerun`, `paper_reference` (D30) |
 | WP8 Release | — | Blocked | |
+| R container | `feat/r-container-ghcr` | **Defined; first build + publish when merged to `dev`** | `ghcr.io/rmrodell/nanomodamp-r:0.1.0`, pinned to the Sherlock reference R environment (137 packages); R modules and CI R tests use it. Make the GHCR package public after the first publish (see `containers/nanomodamp-r/README.md`) |
 
 ## Blockers
 

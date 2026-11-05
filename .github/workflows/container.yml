@@ -1,0 +1,63 @@
+name: container
+# Build the pinned R image (containers/nanomodamp-r) and publish it to the GitHub Container
+# Registry as ghcr.io/rmrodell/nanomodamp-r (Becca, 2026-11-05). Tags:
+#   <nanomodamp DESCRIPTION Version>   e.g. 0.1.0   (what the pipeline modules and CI use)
+#   sha-<short commit>                  every build
+#   dev                                 builds from the dev branch
+# Pull requests and other branches build without pushing, to check the Dockerfile.
+on:
+  push:
+    branches: [dev, main]
+    paths:
+      - "containers/nanomodamp-r/**"
+      - "R/nanomodamp/**"
+      - "!R/nanomodamp/tests/**"
+      - ".github/workflows/container.yml"
+  pull_request:
+    paths:
+      - "containers/nanomodamp-r/**"
+      - "R/nanomodamp/DESCRIPTION"
+      - ".github/workflows/container.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: container-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: "build | nanomodamp-r"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Image version from DESCRIPTION
+        id: ver
+        run: echo "version=$(awk '/^Version:/ {print $2}' R/nanomodamp/DESCRIPTION)" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        if: github.event_name != 'pull_request'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ghcr.io/rmrodell/nanomodamp-r
+          tags: |
+            type=raw,value=${{ steps.ver.outputs.version }},enable=${{ github.event_name != 'pull_request' }}
+            type=sha,prefix=sha-
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: containers/nanomodamp-r/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -4,8 +4,7 @@ process CALL_SITES {
     tag "$name"
     label 'process_medium'
 
-    // placeholder until the nanomodamp-r container (R 4.3 + nanomodamp + blme/car/lme4/furrr/ggplot2) is published
-    container 'docker.io/library/ubuntu:22.04'
+    container 'ghcr.io/rmrodell/nanomodamp-r:0.1.0' // pinned R 4.3.2 / Bioconductor 3.18 image (containers/nanomodamp-r)
 
     input:
     tuple val(name), path(merged), path(analyses)
